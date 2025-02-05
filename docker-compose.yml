@@ -121,6 +121,9 @@ services:
 
   web:
     <<: *app
+    extends:
+      file: hyrax-webapp/docker-compose.yml
+      service: web
     # Uncomment command to access container with out starting bin/web. Useful for debugging or updating Gemfile.lock
     # command: sleep infinity
     environment:
