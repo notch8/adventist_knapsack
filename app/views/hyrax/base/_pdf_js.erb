@@ -1,0 +1,8 @@
+<%# Override Hyku 5 to send presenter to pdf_js_url method instead of download_path %>
+<div class="viewer-wrapper">
+  <iframe id="pdf-viewer" aria-label="image view"
+    src="<%= pdf_js_url(file_set_presenter) %>"
+    allowfullscreen="true"
+    frameborder="0"
+  ></iframe>
+</div>
