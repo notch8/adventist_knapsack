@@ -5,7 +5,7 @@
   <%= fi.input :metadata_prefix, as: :string, hint: 'Such as oai_dc, dcterms or oai_qdc', input_html: { value: importer.parser_fields['metadata_prefix'] } %>
 
   <%= fi.input :set, collection: [importer.parser_fields['set']], label: 'Set (source)', selected: importer.parser_fields['set'] %>
-  <button type="button" class="btn btn-default refresh-set-source">Refresh Sets</button>
+  <button type="button" class="btn btn-secondary refresh-set-source">Refresh Sets</button>
 
   <%= fi.input :visibility,
     collection: [

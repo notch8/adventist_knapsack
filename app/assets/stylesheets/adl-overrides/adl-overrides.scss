@@ -73,7 +73,7 @@ body.adventist_digital_library {
     }
   }
 
-  .btn.btn-default {
+  .btn.btn-secondary {
     background-color: $white;
     border-color: $darkyellow;
     border: 2px solid $darkyellow;
@@ -104,7 +104,7 @@ body.adventist_digital_library {
     }
   }
 
-  .btn.btn-primary, .btn.btn-default {
+  .btn.btn-primary, .btn.btn-secondary{
     &.disabled:hover,
     &.disabled:hover,
     &.disabled:focus,
@@ -296,7 +296,7 @@ body.adventist_digital_library {
   }
 
   .search-widgets, #sort-dropdown, #per_page-dropdown {
-    .btn.btn-default {
+    .btn.btn-secondary {
       &.view-type-gallery, &.view-type-list, &.view-type-masonry, &.view-type-slideshow, &.dropdown-toggle {
         border-color: $lightgreyborder;
         color: $darkgrey;

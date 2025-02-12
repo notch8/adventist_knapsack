@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# OVERRIDE: Overriding entire job temporarily, pending cleanup via
-# https://github.com/notch8/adventist_knapsack/issues/728
 # OVERRIDE to end job based on pdfjs/uv flipper before doing anything
 # so we don't get job errors
 require 'iiif_print/jobs/application_job'
@@ -67,6 +65,7 @@ module IiifPrint
     # rubocop:disable Metrics/MethodLength
     def split_pdf(original_pdf_path, user, child_model, pdf_file_set)
       user = User.find_by_user_key(user) unless user.is_a?(User)
+      # split the pdf into individual pages; pdf_file_set needed for derivative rodeo splitter
       image_files = @parent_work.iiif_print_config.pdf_splitter_service.call(original_pdf_path, file_set: pdf_file_set)
 
       # give as much info as possible if we don't have image files to work with.
@@ -92,11 +91,11 @@ module IiifPrint
         operation_type: "PDF Batch Create"
       )
       BatchCreateJob.perform_later(user,
-                                    @child_work_titles,
-                                    @resource_types,
-                                    @uploaded_files,
-                                    attributes.merge!(model: child_model.to_s, split_from_pdf_id: @split_from_pdf_id).with_indifferent_access,
-                                    operation)
+                                   @child_work_titles,
+                                   @resource_types,
+                                   @uploaded_files,
+                                   attributes.merge!(model: child_model.to_s, split_from_pdf_id: @split_from_pdf_id).with_indifferent_access,
+                                   operation)
     end
     # rubocop:enable Metrics/MethodLength
     # rubocop:enable Metrics/ParameterLists

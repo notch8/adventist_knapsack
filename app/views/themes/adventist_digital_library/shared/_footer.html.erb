@@ -7,8 +7,8 @@
       <div class="col-6 py-2 <%= "active" if current_page?(hyrax.about_path) %>">
         <%= link_to t(:'hyrax.controls.about'), hyrax.about_path, aria: current_page?(hyrax.about_path) ? {current: 'page'} : nil %>
       </div>
-      <div class="col-6 py-2 <%= "active" if current_page?(hyku_knapsack.resources_path) %>">
-        <%= link_to t(:'hyrax.controls.resources'), hyku_knapsack.resources_path, aria: current_page?(hyku_knapsack.resources_path) ? {current: 'page'} : nil %>
+      <div class="col-6 py-2 <%= "active" if current_page?(hyrax.help_path) %>">
+        <%= link_to t(:'hyrax.controls.help'), hyrax.help_path, aria: current_page?(hyrax.help_path) ? {current: 'page'} : nil %>
       </div>
       <div class="col-6 py-2 <%= "active" if current_page?(hyrax.contact_path) %>">
         <%= link_to t(:'hyrax.controls.contact'), hyrax.contact_path, aria: current_page?(hyrax.contact_path) ? {current: 'page'} : nil %>

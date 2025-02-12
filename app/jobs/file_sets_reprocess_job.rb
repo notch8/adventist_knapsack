@@ -106,7 +106,7 @@ class FileSetsReprocessJob < ApplicationJob
       # this PDF.
       return :has_children if parent.child_work_ids.any?
 
-      IiifPrint::Jobs::RequestSplitPdfJob.perform_later(file_set:, user: User.batch_user)
+      IiifPrint::Jobs::RequestSplitPdfJob.perform_later(file_set_id:, user: User.batch_user)
       :requesting_split
     end
     # rubocop:enable Layout/LineLength
