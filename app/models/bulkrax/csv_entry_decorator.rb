@@ -7,6 +7,12 @@ require 'csv'
 module Bulkrax
   module CsvEntryDecorator
     module ClassMethods
+      # the default work type to use if none is specified in the import
+      # This wasn't being honored from the initializer, so we're setting it here
+      def default_work_type
+        Bulkrax.config.default_work_type
+      end
+
       def read_data(path)
         raise StandardError, 'CSV path empty' if path.blank?
         options = {
