@@ -3,7 +3,7 @@
 # Generated via
 #  `rails generate dog_biscuits:work Dataset`
 class Dataset < DogBiscuits::Dataset
-  include VideoEmbedViewer
+  include VideoEmbedBehavior
   include ::Hyrax::WorkBehavior
   include SlugBug
 

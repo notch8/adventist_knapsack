@@ -6,15 +6,6 @@ module HykuKnapsack
     include ::DogBiscuitsHelper
     include ::PdfJsHelper
     include ::FeaturesHelper
-
-    def video_embed_viewer_display(work_presenter, locals = {})
-      render video_embed_viewer_display_partial(work_presenter),
-             locals.merge(presenter: work_presenter)
-    end
-
-    def video_embed_viewer_display_partial(work_presenter)
-      'hyrax/base/' + work_presenter.video_embed_viewer.to_s
-    end
   end
 
   # A Blacklight index field helper_method

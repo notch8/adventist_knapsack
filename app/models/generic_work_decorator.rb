@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-GenericWork.include(VideoEmbedViewer)
+GenericWork.include(VideoEmbedBehavior)
 GenericWork.include(::Hyrax::WorkBehavior)
 GenericWork.include(DogBiscuits::Abstract)
 GenericWork.include(DogBiscuits::BibliographicCitation)
