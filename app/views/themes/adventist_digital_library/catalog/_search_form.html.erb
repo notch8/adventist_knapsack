@@ -1,16 +1,19 @@
-<%# OVERRIDE FOR SEARCH FORM TO REMOVE TEXT THAT SAYS "Search Hyku" HYRAX VERSION v5.0.1 %>
+<%# OVERRIDE: Hyku 5.0.1 for custom adventist theming %>
 <%= form_tag search_form_action, method: :get, class: "search-form", id: "search-form-header", role: "search" do %>
-  <%= render_hash_as_hidden_fields(search_state.params_for_search.except(:q, :search_field, :qt, :page, :utf8)) %>
+  <%= render Blacklight::HiddenSearchStateComponent.new(params: search_state.params_for_search.except(:q, :search_field, :qt, :page, :utf8)) %>
   <%= hidden_field_tag :search_field, 'all_fields' %>
-
   <div class="form-group mb-2">
     <div class="input-group">
-      <%= text_field_tag :q, current_search_parameters, class: "form-control", id: "search-field-header", placeholder: t("hyrax.search.form.q.placeholder") %>
+      <label class="col-sm-3 mb-0" for="search-field-header">
+        <%= t("hyrax.search.form.q.label", application_name: application_name) %>
+      </label>
+      <%= text_field_tag :q, current_search_parameters , 'aria-label': 'Search', class: "q form-control", id: "search-field-header", placeholder: t("hyrax.search.form.q.placeholder") %>
 
       <div class="input-group-btn">
         <button type="submit" class="btn masthead-search-button" id="search-submit-header">
           <%= t('hyrax.search.button.html') %>
         </button>
+        <%# OVERRIDE here to include the advanced search button in the search bar %>
         <%= link_to "Advanced", "/advanced", class: 'btn masthead-search-button', id: 'advanced-top-button' %>
 
         <% if current_user %>
@@ -31,7 +34,7 @@
                 data: { "search-option" => hyrax.my_collections_path, "search-label" => t("hyrax.search.form.option.my_collections.label_short") } %>
           </div>
         <% end %>
-      </div><!-- /.input-group-append -->
+      </div><!-- /.input-group-btn -->
     </div><!-- /.input-group -->
   </div><!-- /.form-group -->
 <% end %>

@@ -73,7 +73,7 @@ body.adventist_digital_library {
     }
   }
 
-  .btn.btn-default {
+  .btn.btn-secondary {
     background-color: $white;
     border-color: $darkyellow;
     border: 2px solid $darkyellow;
@@ -104,7 +104,7 @@ body.adventist_digital_library {
     }
   }
 
-  .btn.btn-primary, .btn.btn-default {
+  .btn.btn-primary, .btn.btn-secondary{
     &.disabled:hover,
     &.disabled:hover,
     &.disabled:focus,
@@ -296,7 +296,7 @@ body.adventist_digital_library {
   }
 
   .search-widgets, #sort-dropdown, #per_page-dropdown {
-    .btn.btn-default {
+    .btn.btn-secondary {
       &.view-type-gallery, &.view-type-list, &.view-type-masonry, &.view-type-slideshow, &.dropdown-toggle {
         border-color: $lightgreyborder;
         color: $darkgrey;
@@ -420,6 +420,7 @@ body.adventist_digital_library {
   li.dropdown-item {
     padding: 10px;
     width: 200px;
+    font-size: 100%;
   }
 
   // FORMS
@@ -520,4 +521,17 @@ body.works-show.adl_show {
 .title-with-badges span.badge,
 .collection-title-row-content span.badge {
   display: none;
+}
+
+// adds background to collection banner text items so they don't disappear on the background
+.hyc-banner {
+  .hyc-bugs {
+    .hyc-created-by,
+    .hyc-last-updated {
+      background: rgba(255, 255, 255, 0.75);
+      border-radius: 0.5em;
+      color: #333;
+      padding: 1px;
+    }
+  }
 }

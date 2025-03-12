@@ -499,7 +499,6 @@ en:
       about: About
       contact: Contact
       help: Help
-      resources: Other Resources
       home: Home
     dashboard:
       additional_notifications: See all notifications
@@ -920,7 +919,6 @@ en:
         agreement_page: Deposit Agreement
         help_page: Help Page
         terms_page: Terms of Use
-        resources_page: Other Resources
       updated: Pages updated.
     passive_consent_to_agreement: By saving this work I agree to the
     search:
