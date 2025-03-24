@@ -75,6 +75,8 @@ extraEnvVars: &envVars
     value: "true"
   - name: BUNDLE_LOCAL__HYKU_KNAPSACK
     value: /app/samvera
+  - name: CH12N_TOOL
+    value: fits_servlet
   - name: CLIENT_ADMIN_USER_EMAIL
     value: $CLIENT_ADMIN_USER_EMAIL
   - name: CLIENT_ADMIN_USER_PASSWORD

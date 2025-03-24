@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+`git fetch -ap`
+branches = `git branch --merged main`.split("\n").collect { |b| b.delete('*').strip }
+
+branches -= ['staging', 'main']
+
+branches.each do |branch|
+  puts `git branch -d #{branch}`
+end
