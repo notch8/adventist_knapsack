@@ -2,20 +2,24 @@
 
 require 'open3'
 require 'bundler'
+DIR = File.dirname(__FILE__)
 
-def db_wait(address)
-  system("db-wait.sh #{address}")
+def service_wait(address)
+  run_command("#{DIR}/service-wait.sh #{address}")
 end
 
 def run_command(command)
   stdout, stderr, status = Open3.capture3(command)
   raise stderr unless status.success?
+  puts stdout
   stdout
 end
 
 def migrations_list(query)
   result = run_command(query)
   result.split("\n").map(&:strip).reject(&:empty?)
+rescue
+  []
 end
 
 def bundled_migrations
@@ -45,9 +49,9 @@ begin
   db_name = ENV['DB_NAME']
   db_password = ENV['DB_PASSWORD']
 
-  db_wait("#{db_host}:#{db_port}")
-  db_wait("#{fcrepo_host}:#{fcrepo_port}") if fcrepo_host
-  db_wait("#{solr_host}:#{solr_port}")
+  service_wait("#{db_host}:#{db_port}")
+  service_wait("#{fcrepo_host}:#{fcrepo_port}") if fcrepo_host
+  service_wait("#{solr_host}:#{solr_port}")
 
   migrations_run_query = "PGPASSWORD=#{db_password} psql -h #{db_host} -U #{db_user} #{db_name} -t -c \"SELECT version FROM schema_migrations ORDER BY schema_migrations\""
   migrations_run = migrations_list(migrations_run_query)

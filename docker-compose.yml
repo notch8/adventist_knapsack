@@ -1,3 +1,4 @@
+version: '3.8'
 x-app: &app
   build:
     context: .
@@ -13,9 +14,9 @@ x-app: &app
     - AUXILIARY_QUEUE_TENANTS="sdapi" # This line is what makes the knapsack include use the local code instead of the remote gem
     - AWS_REGION=us-east-1
     - AWS_S3_BUCKET=space-stone-production-preprocessedbucketf21466dd-15sun4xy658nh
+    - BUNDLE_BUNDLER_INJECT__GEM_PATH=/app/samvera/bundler.d
     - BUNDLE_DISABLE_LOCAL_BRANCH_CHECK=true
     - BUNDLE_LOCAL__HYKU_KNAPSACK=/app/samvera # This line is what makes the knapsack include use the local code instead of the remote gem
-    - FITS_SERVLET_URL=http://fits:8080/fits
     - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
     - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400
     - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
@@ -34,8 +35,6 @@ x-app: &app
   networks:
     internal:
 
-
-
 x-app-worker: &app-worker
     <<: *app
     extends:
@@ -46,7 +45,7 @@ x-app-worker: &app-worker
       target: hyku-worker
       cache_from:
         - ghcr.io/samvera/hyku/base:latest
-        - ghcr.io/samvera-labs/hyku_knapsack/worker:latest
+        - ghcr.io/notch8/adventist_knapsack/worker:latest
       args:
         BUILDKIT_INLINE_CACHE: 1
         APP_PATH: ./hyrax-webapp
@@ -116,7 +115,7 @@ services:
     extends:
       file: hyrax-webapp/docker-compose.yml
       service: base
-    image: ghcr.io/samvera/hyku/base:${BASE_TAG:-latest}
+    image: ghcr.io/samvera/hyku/base:${TAG:-latest}
     command: bash -l -c "echo 'base is only used for building base images, which in turn reduces image build times. It does not need to be run'"
 
   web:
@@ -132,7 +131,6 @@ services:
       - AWS_S3_BUCKET=space-stone-production-preprocessedbucketf21466dd-15sun4xy658nh
       - BUNDLE_DISABLE_LOCAL_BRANCH_CHECK=true
       - BUNDLE_LOCAL__HYKU_KNAPSACK=/app/samvera # This line is what makes the knapsack include use the local code instead of the remote gem
-      - FITS_SERVLET_URL=http://fits:8080/fits
       - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
       - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400
       - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
@@ -175,7 +173,6 @@ services:
       - AWS_S3_BUCKET=space-stone-production-preprocessedbucketf21466dd-15sun4xy658nh
       - BUNDLE_DISABLE_LOCAL_BRANCH_CHECK=true
       - BUNDLE_LOCAL__HYKU_KNAPSACK=/app/samvera # This line is what makes the knapsack include use the local code instead of the remote gem
-      - FITS_SERVLET_URL=http://fits:8080/fits
       - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
       - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400
       - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
@@ -192,12 +189,13 @@ services:
     extends:
       file: hyrax-webapp/docker-compose.yml
       service: initialize_app
-    command:
-      - >
-        solrcloud-upload-configset.sh /app/samvera/hyrax-webapp/solr/conf &&
-        solrcloud-assign-configset.sh &&
-        SOLR_COLLECTION_NAME=hydra-test solrcloud-assign-configset.sh &&
-        db-migrate-seed.sh
+    # command:
+    #   - >
+    #     solrcloud-upload-configset.sh /app/samvera/hyrax-webapp/solr/conf &&
+    #     solrcloud-assign-configset.sh &&
+    #     SOLR_COLLECTION_NAME=hydra-test solrcloud-assign-configset.sh &&
+    #     bundle &&
+    #     db-migrate-seed.sh
 
   redis:
     extends:

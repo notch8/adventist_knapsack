@@ -77,6 +77,8 @@ extraEnvVars: &envVars
     value: /app/samvera
   - name: CONFDIR
     value: "/app/samvera/hyrax-webapp/solr/conf"
+  - name: CH12N_TOOL
+    value: fits_servlet
   - name: CLIENT_ADMIN_USER_EMAIL
     value: $CLIENT_ADMIN_USER_EMAIL
   - name: CLIENT_ADMIN_USER_PASSWORD
@@ -115,6 +117,8 @@ extraEnvVars: &envVars
     value: /rest
   - name: FCREPO_REST_PATH
     value: rest
+  - name: FITS_SERVLET_URL
+    value: http://adventist-knapsack-staging-fits:8080/fits
   # - name: GOOGLE_ANALYTICS_ID
   #   value: $GOOGLE_ANALYTICS_ID
   # - name: GOOGLE_OAUTH_APP_NAME
