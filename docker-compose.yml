@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 x-app: &app
   build:
     context: .
@@ -17,6 +17,9 @@ x-app: &app
     - BUNDLE_BUNDLER_INJECT__GEM_PATH=/app/samvera/bundler.d
     - BUNDLE_DISABLE_LOCAL_BRANCH_CHECK=true
     - BUNDLE_LOCAL__HYKU_KNAPSACK=/app/samvera # This line is what makes the knapsack include use the local code instead of the remote gem
+    - BUNDLE_LOCAL__HYRAX=/app/samvera/hyrax-webapp/vendor/hyrax
+    - BUNDLE_LOCAL__BULKRAX=/app/samvera/hyrax-webapp/vendor/bulkrax
+    - FITS_SERVLET_URL=http://fits:8080/fits
     - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
     - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400
     - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
@@ -36,37 +39,37 @@ x-app: &app
     internal:
 
 x-app-worker: &app-worker
-    <<: *app
-    extends:
-      file: hyrax-webapp/docker-compose.yml
-      service: worker
-    build:
-      context: .
-      target: hyku-worker
-      cache_from:
-        - ghcr.io/samvera/hyku/base:latest
-        - ghcr.io/notch8/adventist_knapsack/worker:latest
-      args:
-        BUILDKIT_INLINE_CACHE: 1
-        APP_PATH: ./hyrax-webapp
-    image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
-    # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
-    # command: sleep infinity
-    depends_on:
-      check_volumes:
-        condition: service_completed_successfully
-      initialize_app:
-        condition: service_completed_successfully
-      db:
-        condition: service_started
-      solr:
-        condition: service_started
-      fcrepo:
-        condition: service_started
-      redis:
-        condition: service_started
-      zoo:
-        condition: service_started
+  <<: *app
+  extends:
+    file: hyrax-webapp/docker-compose.yml
+    service: worker
+  build:
+    context: .
+    target: hyku-worker
+    cache_from:
+      - ghcr.io/samvera/hyku/base:latest
+      - ghcr.io/notch8/adventist_knapsack/worker:latest
+    args:
+      BUILDKIT_INLINE_CACHE: 1
+      APP_PATH: ./hyrax-webapp
+  image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
+  # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
+  # command: sleep infinity
+  depends_on:
+    check_volumes:
+      condition: service_completed_successfully
+    initialize_app:
+      condition: service_completed_successfully
+    db:
+      condition: service_started
+    solr:
+      condition: service_started
+    fcrepo:
+      condition: service_started
+    redis:
+      condition: service_started
+    zoo:
+      condition: service_started
 
 volumes:
   assets:
