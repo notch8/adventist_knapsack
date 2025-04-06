@@ -1,7 +1,7 @@
 module JobStatistics
-  def completed_jobs_statistics(duration = 1.day)
+  def completed_jobs_statistics(start_at: 1.day.ago, end_at: 1.minute.ago)
     # Get the completed jobs from the last 1 day
-    completed_jobs = GoodJob::Job.where("finished_at >= ?", duration.ago); nil
+    completed_jobs = GoodJob::Job.where("finished_at >= ? and finished_at < ?", start_at, end_at); nil
 
     # Group the jobs by job class name
     grouped_jobs = completed_jobs.group_by {|j|
