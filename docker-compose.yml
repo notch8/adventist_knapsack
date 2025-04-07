@@ -84,9 +84,6 @@ services:
     extends:
       file: hyrax-webapp/docker-compose.yml
       service: adminer
-    environment:
-      - VIRTUAL_PORT=8080
-      - VIRTUAL_HOST=admin-hyku.localhost.direct
   zoo:
     extends:
       file: hyrax-webapp/docker-compose.yml
