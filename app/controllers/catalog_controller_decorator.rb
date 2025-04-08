@@ -75,7 +75,7 @@ CatalogController.configure_blacklight do |config|
                  DogBiscuits.config.all_properties.map { |p| "#{p}_tesim" }).uniq
     all_show_names |= [title_name]
     field.solr_parameters = {
-      qf: "#{all_show_names.join(" ")} file_format_tesim all_text_timv all_text_tsimv",
+      qf: "#{all_show_names.join(' ')} file_format_tesim all_text_timv all_text_tsimv",
       pf: title_name.to_s
     }
   end
