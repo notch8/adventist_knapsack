@@ -70,11 +70,12 @@ CatalogController.configure_blacklight do |config|
                           label: 'All Fields',
                           include_in_advanced_search: false,
                           advanced_parse: false) do |field|
-    all_names = (config.show_fields.values.map { |v| v.field.to_s } +
-                 DogBiscuits.config.all_properties.map { |p| "#{p}_tesim" }).uniq.join(" ")
     title_name = 'title_tesim'
+    all_show_names = (config.show_fields.values.map { |v| v.field.to_s } +
+                 DogBiscuits.config.all_properties.map { |p| "#{p}_tesim" }).uniq
+    all_show_names |= [title_name]
     field.solr_parameters = {
-      qf: "#{all_names} file_format_tesim all_text_timv all_text_tsimv",
+      qf: "#{all_show_names.join(" ")} file_format_tesim all_text_timv all_text_tsimv",
       pf: title_name.to_s
     }
   end
