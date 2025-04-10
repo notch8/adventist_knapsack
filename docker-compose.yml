@@ -8,7 +8,7 @@ x-app: &app
     args:
       BUILDKIT_INLINE_CACHE: 1
       APP_PATH: ./hyrax-webapp
-      BASE_LABEL: ${BASE_LABEL:-latest}
+      BASE_TAG: ${BASE_TAG:-latest}
   image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
   environment:
     - AUXILIARY_QUEUE_TENANTS="sdapi"
@@ -36,7 +36,7 @@ x-app-worker: &app-worker
     args:
       BUILDKIT_INLINE_CACHE: 1
       APP_PATH: ./hyrax-webapp
-      BASE_LABEL: ${BASE_LABEL:-latest}
+      BASE_TAG: ${BASE_TAG:-latest}
   image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
   # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
   # command: sleep infinity
