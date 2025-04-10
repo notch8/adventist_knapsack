@@ -1,12 +1,12 @@
 module JobStatistics
   def completed_jobs_statistics(start_at: 1.day.ago, end_at: 1.minute.ago)
     # Get the completed jobs from the last 1 day
-    completed_jobs = GoodJob::Job.where("finished_at >= ? and finished_at < ?", start_at, end_at); nil
+    completed_jobs = GoodJob::Job.where("finished_at >= ? and finished_at < ?", start_at, end_at)
 
     # Group the jobs by job class name
-    grouped_jobs = completed_jobs.group_by {|j|
+    grouped_jobs = completed_jobs.group_by do |j|
       j.serialized_params['job_class']
-    }; nil
+    end
 
     # Initialize the result hash
     result = {}
@@ -21,7 +21,7 @@ module JobStatistics
       average_time = total_time / count
 
       # Store the result in the hash
-      result[job_class] = { count: count, average_time: average_time }
+      result[job_class] = { count:, average_time: }
     end
 
     result
