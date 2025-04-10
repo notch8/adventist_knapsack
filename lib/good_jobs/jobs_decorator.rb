@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module JobStatistics
   def completed_jobs_statistics(start_at: 1.day.ago, end_at: 1.minute.ago)
     # Get the completed jobs from the last 1 day
