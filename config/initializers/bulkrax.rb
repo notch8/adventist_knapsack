@@ -26,6 +26,9 @@ Rails.application.config.after_initialize do
 
     # Server name for oai request header
     # config.server_name = 'my_server@name.com'
+    # Uncomment to create works pre-valkyrie works for testing
+    # config.object_factory = Bulkrax::ObjectFactory
+    # config.factory_class_name_coercer = Bulkrax::FactoryClassFinder::DefaultCoercer
 
     # Lambda to set the default field mapping
     config.default_field_mapping = lambda do |field|
