@@ -10,3 +10,6 @@ scratch.md
 
 /coverage
 file_cache/
+Gemfile.lock
+.mise.toml
+docker-compose.override.yml
