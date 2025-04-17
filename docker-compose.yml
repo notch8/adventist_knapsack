@@ -21,6 +21,12 @@ x-app: &app
     - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400
     - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
     - HYRAX_ACTIVE_JOB_QUEUE=good_job
+  volumes:
+    - node_modules:/app/samvera/hyrax-webapp/node_modules:cached
+    - uploads:/app/samvera/hyrax-webapp/public/uploads:cached
+    - assets:/app/samvera/hyrax-webapp/public/assets:cached
+    - cache:/app/samvera/hyrax-webapp/tmp/cache:cached
+    - .:/app/samvera
 
 x-app-worker: &app-worker
   <<: *app
