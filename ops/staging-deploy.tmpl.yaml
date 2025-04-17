@@ -56,7 +56,7 @@ ingress:
     cert-manager.io/cluster-issuer: wildcard-issuer
   tls:
     - hosts:
-        - '*.s2.adventistdigitallibrary.org'
+        - "*.s2.adventistdigitallibrary.org"
         - s2.adventistdigitallibrary.org
       secretName: adventist-staging-wild-tls
 
@@ -152,14 +152,16 @@ extraEnvVars: &envVars
   - name: HYKU_BULKRAX_ENABLED
     value: "true"
   - name: HYKU_CONTACT_EMAIL
-    value: 'support@notch8.com'
+    value: "support@notch8.com"
   - name: HYKU_DEFAULT_HOST
     value: "%{tenant}.s2.adventistdigitallibrary.org"
   - name: HYKU_FILE_ACL
     value: "true"
   - name: HYKU_GEONAMES_USERNAME
-    value: 'scientist'
+    value: "scientist"
   - name: HYKU_MULTITENANT
+    value: "true"
+  - name: HYKU_QUEUED_RUNNER
     value: "true"
   - name: HYKU_ROOT_HOST
     value: s2.adventistdigitallibrary.org
@@ -310,147 +312,146 @@ workerAux:
 
 extraDeploy:
   - |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: {{ include "hyrax.fullname" . }}-worker-aux
-        labels:
-          {{- include "hyrax.labels" . | nindent 4 }}
-      spec:
-        replicas: {{ .Values.worker.replicaCount }}
-        selector:
-          matchLabels:
-            {{- include "hyrax.workerSelectorLabels" . | nindent 6 }}
-        template:
-          metadata:
-          {{- with .Values.podAnnotations }}
-            annotations:
-              {{- toYaml . | nindent 8 }}
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: {{ include "hyrax.fullname" . }}-worker-aux
+      labels:
+        {{- include "hyrax.labels" . | nindent 4 }}
+    spec:
+      replicas: {{ .Values.worker.replicaCount }}
+      selector:
+        matchLabels:
+          {{- include "hyrax.workerSelectorLabels" . | nindent 6 }}
+      template:
+        metadata:
+        {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 8 }}
+        {{- end }}
+          labels:
+            {{- include "hyrax.workerSelectorLabels" . | nindent 8 }}
+        spec:
+          initContainers:
+            - name: db-wait
+              image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+              envFrom:
+                - configMapRef:
+                    name: {{ include "hyrax.fullname" . }}-env
+                - secretRef:
+                    name: {{ template "hyrax.fullname" . }}
+              env:
+                {{- toYaml .Values.worker.extraEnvVars | nindent 12 }}
+                {{- toYaml .Values.workerAux.extraEnvVars | nindent 12 }}
+              command:
+                - sh
+                - -c
+                - "db-wait.sh {{ include "hyrax.redis.host" . }}:6379"
+            {{- if .Values.worker.extraInitContainers }}
+            {{- toYaml .Values.worker.extraInitContainers | nindent 8 }}
+            {{- end }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 8 }}
           {{- end }}
-            labels:
-              {{- include "hyrax.workerSelectorLabels" . | nindent 8 }}
-          spec:
-            initContainers:
-              - name: db-wait
-                image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag | default .Chart.AppVersion }}"
-                imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
-                envFrom:
-                  - configMapRef:
-                      name: {{ include "hyrax.fullname" . }}-env
-                  - secretRef:
-                      name: {{ template "hyrax.fullname" . }}
-                env:
-                  {{- toYaml .Values.worker.extraEnvVars | nindent 12 }}
-                  {{- toYaml .Values.workerAux.extraEnvVars | nindent 12 }}
-                command:
-                  - sh
-                  - -c
-                  - "db-wait.sh {{ include "hyrax.redis.host" . }}:6379"
-              {{- if .Values.worker.extraInitContainers }}
-              {{- toYaml .Values.worker.extraInitContainers | nindent 8 }}
-              {{- end }}
-            {{- with .Values.imagePullSecrets }}
-            imagePullSecrets:
-              {{- toYaml . | nindent 8 }}
-            {{- end }}
-            serviceAccountName: {{ include "hyrax.serviceAccountName" . }}
-            securityContext:
-              {{- toYaml .Values.worker.podSecurityContext | nindent 8 }}
-            containers:
-              - name: {{ .Chart.Name }}-worker
-                securityContext:
-                  {{- toYaml .Values.worker.securityContext | nindent 12 }}
-                image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag | default .Chart.AppVersion }}"
-                imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
-                envFrom:
-                  - configMapRef:
-                      name: {{ include "hyrax.fullname" . }}-env
-                  - secretRef:
-                      name: {{ template "hyrax.fullname" . }}
-                  {{- if .Values.solrExistingSecret }}
-                  - secretRef:
-                      name: {{ .Values.solrExistingSecret }}
-                  {{- end }}
-                  {{- with .Values.worker.extraEnvFrom }}
-                    {{- toYaml . | nindent 12 }}
-                  {{- end }}
-                env:
-                  {{- toYaml .Values.worker.extraEnvVars | nindent 12 }}
-                  {{- toYaml .Values.workerAux.extraEnvVars | nindent 12 }}
-                {{- if .Values.worker.readinessProbe.enabled }}
-                readinessProbe:
-                  exec:
-                    command:
-                      {{- toYaml .Values.worker.readinessProbe.command | nindent 16 }}
-                  failureThreshold: {{ .Values.worker.readinessProbe.failureThreshold }}
-                  initialDelaySeconds: {{ .Values.worker.readinessProbe.initialDelaySeconds }}
-                  periodSeconds: {{ .Values.worker.readinessProbe.periodSeconds }}
-                  successThreshold: {{ .Values.worker.readinessProbe.successThreshold }}
-                  timeoutSeconds: {{ .Values.worker.readinessProbe.timeoutSeconds }}
+          serviceAccountName: {{ include "hyrax.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.worker.podSecurityContext | nindent 8 }}
+          containers:
+            - name: {{ .Chart.Name }}-worker
+              securityContext:
+                {{- toYaml .Values.worker.securityContext | nindent 12 }}
+              image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+              envFrom:
+                - configMapRef:
+                    name: {{ include "hyrax.fullname" . }}-env
+                - secretRef:
+                    name: {{ template "hyrax.fullname" . }}
+                {{- if .Values.solrExistingSecret }}
+                - secretRef:
+                    name: {{ .Values.solrExistingSecret }}
                 {{- end }}
-                volumeMounts:
-                  - name: derivatives
-                    mountPath: /app/samvera/derivatives
-                  - name: uploads
-                    subPath: file_cache
-                    mountPath: /app/samvera/file_cache
-                  - name: uploads
-                    subPath: uploads
-                    mountPath: /app/samvera/uploads
-                  {{- if .Values.applicationExistingClaim }}
-                  - name: application
-                    mountPath: /app/samvera/hyrax-webapp
-                  {{- end }}
-                  {{- with .Values.worker.extraVolumeMounts }}
+                {{- with .Values.worker.extraEnvFrom }}
                   {{- toYaml . | nindent 12 }}
-                  {{- end }}
-                resources:
-                  {{- toYaml .Values.worker.resources | nindent 12 }}
-                {{- with .Values.extraContainerConfiguration }}
-                {{- toYaml . | nindent 10 }}
                 {{- end }}
-            volumes:
-              - name: "derivatives"
-                {{- if and .Values.derivativesVolume.enabled .Values.derivativesVolume.existingClaim }}
-                persistentVolumeClaim:
-                  claimName: {{ .Values.derivativesVolume.existingClaim }}
-                {{- else if .Values.derivativesVolume.enabled }}
-                persistentVolumeClaim:
-                  claimName: {{ template "hyrax.fullname" . }}-derivatives
-                {{ else }}
-                emptyDir: {}
-                {{ end }}
-              - name: "uploads"
-                {{- if and .Values.uploadsVolume.enabled .Values.uploadsVolume.existingClaim }}
-                persistentVolumeClaim:
-                  claimName: {{ .Values.uploadsVolume.existingClaim }}
-                {{- else if .Values.uploadsVolume.enabled }}
-                persistentVolumeClaim:
-                  claimName: {{ template "hyrax.fullname" . }}-uploads
-                {{ else }}
-                emptyDir: {}
-                {{ end }}
-              {{- if .Values.applicationExistingClaim }}
-              - name: "application"
-                persistentVolumeClaim:
-                  claimName: {{ .Values.applicationExistingClaim }}
+              env:
+                {{- toYaml .Values.worker.extraEnvVars | nindent 12 }}
+                {{- toYaml .Values.workerAux.extraEnvVars | nindent 12 }}
+              {{- if .Values.worker.readinessProbe.enabled }}
+              readinessProbe:
+                exec:
+                  command:
+                    {{- toYaml .Values.worker.readinessProbe.command | nindent 16 }}
+                failureThreshold: {{ .Values.worker.readinessProbe.failureThreshold }}
+                initialDelaySeconds: {{ .Values.worker.readinessProbe.initialDelaySeconds }}
+                periodSeconds: {{ .Values.worker.readinessProbe.periodSeconds }}
+                successThreshold: {{ .Values.worker.readinessProbe.successThreshold }}
+                timeoutSeconds: {{ .Values.worker.readinessProbe.timeoutSeconds }}
               {{- end }}
-              {{- with .Values.worker.extraVolumes }}
-              {{- toYaml . | nindent 8 }}
+              volumeMounts:
+                - name: derivatives
+                  mountPath: /app/samvera/derivatives
+                - name: uploads
+                  subPath: file_cache
+                  mountPath: /app/samvera/file_cache
+                - name: uploads
+                  subPath: uploads
+                  mountPath: /app/samvera/uploads
+                {{- if .Values.applicationExistingClaim }}
+                - name: application
+                  mountPath: /app/samvera/hyrax-webapp
+                {{- end }}
+                {{- with .Values.worker.extraVolumeMounts }}
+                {{- toYaml . | nindent 12 }}
+                {{- end }}
+              resources:
+                {{- toYaml .Values.worker.resources | nindent 12 }}
+              {{- with .Values.extraContainerConfiguration }}
+              {{- toYaml . | nindent 10 }}
               {{- end }}
-            {{- with .Values.worker.nodeSelector }}
-            nodeSelector:
-              {{- toYaml . | nindent 8 }}
+          volumes:
+            - name: "derivatives"
+              {{- if and .Values.derivativesVolume.enabled .Values.derivativesVolume.existingClaim }}
+              persistentVolumeClaim:
+                claimName: {{ .Values.derivativesVolume.existingClaim }}
+              {{- else if .Values.derivativesVolume.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ template "hyrax.fullname" . }}-derivatives
+              {{ else }}
+              emptyDir: {}
+              {{ end }}
+            - name: "uploads"
+              {{- if and .Values.uploadsVolume.enabled .Values.uploadsVolume.existingClaim }}
+              persistentVolumeClaim:
+                claimName: {{ .Values.uploadsVolume.existingClaim }}
+              {{- else if .Values.uploadsVolume.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ template "hyrax.fullname" . }}-uploads
+              {{ else }}
+              emptyDir: {}
+              {{ end }}
+            {{- if .Values.applicationExistingClaim }}
+            - name: "application"
+              persistentVolumeClaim:
+                claimName: {{ .Values.applicationExistingClaim }}
             {{- end }}
-            {{- with .Values.worker.affinity }}
-            affinity:
-              {{- toYaml . | nindent 8 }}
+            {{- with .Values.worker.extraVolumes }}
+            {{- toYaml . | nindent 8 }}
             {{- end }}
-            {{- with .Values.worker.tolerations }}
-            tolerations:
-              {{- toYaml . | nindent 8 }}
-            {{- end }}
-
+          {{- with .Values.worker.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          {{- with .Values.worker.affinity }}
+          affinity:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          {{- with .Values.worker.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
 
 podSecurityContext:
   runAsUser: 1001

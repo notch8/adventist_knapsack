@@ -22,6 +22,7 @@ x-app: &app
     - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
     - HYRAX_ACTIVE_JOB_QUEUE=good_job
   volumes:
+    # volumes are duplicated because we need to mount app/samvera instead of app/samvera/hyrax-webapp
     - node_modules:/app/samvera/hyrax-webapp/node_modules:cached
     - uploads:/app/samvera/hyrax-webapp/public/uploads:cached
     - assets:/app/samvera/hyrax-webapp/public/assets:cached
