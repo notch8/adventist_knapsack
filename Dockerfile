@@ -24,7 +24,7 @@ USER app
 FROM hyku-knap-base AS hyku-web
 RUN RAILS_ENV=production SECRET_KEY_BASE=`bin/rake secret` DB_ADAPTER=nulldb DB_URL='postgresql://fake' bundle exec rake assets:precompile && yarn install
 
-CMD ./bin/web
+CMD /app/samvera/bin/web
 
 FROM hyku-web AS hyku-worker
-CMD ./bin/worker
+CMD /app/samvera/bin/worker
