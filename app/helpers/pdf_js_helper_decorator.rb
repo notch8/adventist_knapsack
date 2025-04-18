@@ -48,6 +48,13 @@ module PdfJsHelperDecorator
 
     "search=#{q}&phrase=true"
   end
+
+  # overide the default behavior to deactivate checkboxes.
+  # They do not seem to work for the work types defined in Hyrax or Hyku
+  # and are preventing the PDF.js viewer from displaying.
+  def render_show_pdf_behavior_checkbox?
+    false
+  end
 end
 
 PdfJsHelper.prepend(PdfJsHelperDecorator)

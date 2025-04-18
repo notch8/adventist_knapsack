@@ -9,32 +9,32 @@ module Hyku
       klass == JournalArticle ? 'Periodical' : 'Part Of'
     end
 
-    # OVERRIDE incorporates fallback to PDF.js viewer via fileset's import_url
+    # OVERRIDE incorporates fallback to PDF.js viewer via fileset's import_url, allowing
+    # works with an import url to be displayed in the PDF.js viewer even if the file
+    # failed to attach correctly.
     # see also pdf_js_helper_decorator
+    # This also omits the show_pdf_viewer logic that is in hyku, as it is not currently fully functional for adventist and prevents PDFs from displaying when they should in some cases.
+    # @return [Boolean] render a PDF.js viewer
     def show_pdf_viewer?
       return false unless Flipflop.default_pdf_viewer? || !iiif_viewer?
-      return false unless file_set_presenters.any?(&:pdf?) || pdf_extension?
-
-      no_child_works?
+      # return false unless show_pdf_viewer
+      # return false unless file_set_presenters.any?(&:pdf?) || pdf_extension?
+      file_set_presenters.any?(&:pdf?) || pdf_extension?
+      # show_for_pdf?(show_pdf_viewer)
     end
 
-    # OVERRIDE Hyku TenantConfig
+    # OVERRIDE Hyku TenantConfig to fall back to PDFjs viewer if we have a pdf that hasn't been split so we don't get a blank viewer
     # @return [Boolean] render a IIIF viewer
     def iiif_viewer?
-      no_children = no_child_works?
+      no_child_works = member_presenters.all? { |presenter| presenter.is_a? Hyrax::FileSetPresenter }
       # Fall back to PDFjs viewer if we have a pdf that hasn't been split
-      return false if no_children && (file_set_presenters.any?(&:pdf?) || pdf_extension?)
-      # Fallback to UV even if PDFjs flag is on, as long as PDF has been split
+      return false if no_child_works && (file_set_presenters.any?(&:pdf?) || pdf_extension?)
+      # Use the standard behavior from TenantConfig
       Hyrax.config.iiif_image_server? &&
         representative_id.present? &&
         representative_presenter.present? &&
-        members_include_iiif_viewable? &&
-        (iiif_media? || !no_children)
-    end
-
-    # Returns true if all of the member_presenters are file_set presenters
-    def no_child_works?
-      member_presenters.all? { |presenter| presenter.is_a? Hyrax::FileSetPresenter }
+        iiif_media? &&
+        members_include_iiif_viewable?
     end
 
     def pdf_extension?
@@ -42,19 +42,6 @@ module Hyku
       # used label for file name. Using a combination of both.
       file_set_presenters.any? do |fsp|
         (fsp.solr_document['original_filename_tesi'] || fsp.solr_document['label_ssi'])&.downcase&.end_with?('.pdf')
-      end
-    end
-
-    def iiif_media?(presenter: representative_presenter)
-      # override TenantConfig to include pdfs so we can use the UV regardless of the config
-      predicates = (iiif_media_predicates + %i[pdf?]).uniq
-      predicates.any? { |predicate| presenter.try(predicate) || presenter.try(:solr_document).try(predicate) }
-    end
-
-    # Override Tenant Config
-    def members_include_iiif_viewable?
-      iiif_presentable_member_presenters.any? do |presenter|
-        iiif_media?(presenter:) && current_ability.can?(:read, presenter.id)
       end
     end
 
