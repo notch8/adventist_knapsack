@@ -8,7 +8,7 @@ module Hyrax
     def member_presenters(ids = object.member_ids)
       return enum_for(:member_presenters, ids).to_a unless block_given?
 
-      results = query_docs(ids: ids)
+      results = query_docs(ids:)
 
       ids.each do |id|
         id = id.to_s
@@ -16,7 +16,7 @@ module Hyrax
         raise(Hyrax::ObjectNotFoundError, "Could not find an indexed document for id: #{id}") if
           indx.nil?
         hash = results.delete_at(indx)
-        yield presenter_for(document: ::SolrDocument.new(hash), ability: ability)
+        yield presenter_for(document: ::SolrDocument.new(hash), ability:)
       end
     end
 
@@ -52,9 +52,9 @@ module Hyrax
       query = "(id:(#{terms}) OR resource_id_ssi:(#{terms}) OR fedora_id_ssi:(#{terms}))"
 
       Hyrax::SolrService
-      .post(fq: query, rows: 10_000)
-      .fetch('response')
-      .fetch('docs')
+        .post(fq: query, rows: 10_000)
+        .fetch('response')
+        .fetch('docs')
     end
   end
 end
