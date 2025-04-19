@@ -44,7 +44,7 @@ module AdlSolrDocumentDecorator
 
   # Keep these alphebetized; comments indicate those in basic_metadata
   #   see https://github.com/samvera/hyrax/blob/master/app/models/concerns/hyrax/solr_document/metadata.rb
-  # rubocop:disble Metrics/AbcSize, Metrics/MethodLength
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def self.prepended(base)
     base.attribute :abstract, Solr::Array, base.solr_name('abstract')
     base.attribute :access_provided_by, Solr::Array, base.solr_name('access_provided_by')

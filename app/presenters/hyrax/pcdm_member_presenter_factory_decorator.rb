@@ -48,6 +48,7 @@ module Hyrax
 
     # Query for works using resource_id_ssi or fedora_id_ssi to support slugs
     def query_works(ids:)
+      return [] if ids.empty?
       terms = ids.map { |id| "\"#{id}\"" }.join(' ')
       query = "(id:(#{terms}) OR resource_id_ssi:(#{terms}) OR fedora_id_ssi:(#{terms}))"
 
