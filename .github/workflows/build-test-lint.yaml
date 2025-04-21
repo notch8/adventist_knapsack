@@ -19,8 +19,6 @@ on:
           - build
           - test
           - lint
-env:
-  - CI: true
 
 jobs:
   build:
