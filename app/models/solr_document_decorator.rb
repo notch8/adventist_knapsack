@@ -166,7 +166,7 @@ module AdlSolrDocumentDecorator
 
   # @return [Array<SolrDocument>] a list of solr documents in no particular order
   def load_parent_docs
-    # in case the id is a slug, we have to convert it to an id bexause memberships are stored as ids
+    # in case the id is a slug, we have to convert it to an id because memberships are stored as ids
     new_id = self["resource_id_ssi"] || self["fedora_id_ssi"] || id
 
     query("member_ids_ssim:#{new_id}", rows: 1000)
