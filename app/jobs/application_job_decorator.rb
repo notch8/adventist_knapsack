@@ -25,7 +25,7 @@ module ApplicationJobDecorator
                        calculate_priority base: 40
                      when  CharacterizeJob
                        calculate_priority base: 30
-                     when  Hyrax::GrantEditToMembersJob, ImportUrlJob, IngestJob
+                     when  Hyrax::GrantEditToMembersJob, ImportUrlJob, IngestJob, Hyrax::QueuedIndexingJob
                        calculate_priority base: 10
                      when  AttachFilesToWorkJob
                        calculate_priority base: -1
