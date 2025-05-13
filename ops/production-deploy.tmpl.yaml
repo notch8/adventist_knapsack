@@ -131,6 +131,8 @@ extraEnvVars: &envVars
     value: "true"
   - name: HYKU_ALLOW_SIGNUP
     value: "false"
+  - name: HYKU_ATTACK_RATE_THROTTLE_OFF
+    value: "true"
   - name: HYKU_BULKRAX_ENABLED
     value: "true"
   - name: HYKU_CONTACT_EMAIL
