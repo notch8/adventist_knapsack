@@ -129,8 +129,6 @@ extraEnvVars: &envVars
     value: b2.adventistdigitallibrary.org
   - name: HYKU_ADMIN_ONLY_TENANT_CREATION
     value: "true"
-  - name: HYKU_ATTACK_RATE_THROTTLE_OFF
-    value: "true"
   - name: HYKU_ALLOW_SIGNUP
     value: "false"
   - name: HYKU_ATTACK_RATE_THROTTLE_OFF
