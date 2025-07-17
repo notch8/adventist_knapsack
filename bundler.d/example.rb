@@ -14,4 +14,3 @@ ensure_gem 'derivative-rodeo', '~> 0.5', '>= 0.5.3'
 override_gem "hyrax",
              github: "samvera/hyrax",
              ref: "ab4d108114289822b186579cd73a53d68c145a73"
-             
