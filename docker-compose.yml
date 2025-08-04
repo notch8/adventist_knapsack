@@ -14,7 +14,6 @@ x-app: &app
     - AUXILIARY_QUEUE_TENANTS="sdapi"
     - AWS_REGION=us-east-1
     - AWS_S3_BUCKET=space-stone-production-preprocessedbucketf21466dd-15sun4xy658nh
-    - BUNDLE_BUNDLER_INJECT__GEM_PATH=/app/samvera/bundler.d
     - BUNDLE_DISABLE_LOCAL_BRANCH_CHECK=true
     - BUNDLE_LOCAL__HYKU_KNAPSACK=/app/samvera
     - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
