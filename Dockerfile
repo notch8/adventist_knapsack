@@ -13,9 +13,11 @@ RUN bundle install --jobs "$(nproc)"
 USER root
 
 # Install "best" training data for Tesseract
-RUN echo "📚 Installing Tesseract Best (training data)!" && \
-    wget https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata -O /usr/share/tessdata/eng_best.traineddata && \
-    git config --global --add safe.directory /app/samvera
+RUN mkdir -p /app/samvera/tesseract/tessdata
+ENV TESSDATA_PREFIX=/app/samvera/tesseract
+RUN echo "📚 Installing Tesseract Best (training data)!" \
+ && wget https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata \
+      -O /app/samvera/tesseract/tessdata/eng_best.traineddata
 
 # Switch back to the non-root user for running the application
 USER app
