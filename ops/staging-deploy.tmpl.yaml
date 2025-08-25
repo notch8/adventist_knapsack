@@ -472,6 +472,9 @@ fcrepo:
 postgresql:
   enabled: false
 redis:
+  image:
+  repository: bitnamilegacy/redis
+  tag: 7.0.2-debian-11-r13
   architecture: standalone
   cluster:
     enabled: false
