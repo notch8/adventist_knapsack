@@ -155,6 +155,8 @@ extraEnvVars: &envVars
     value: "false"
   - name: HYRAX_FITS_PATH
     value: /app/fits/fits.sh
+  - name: HYRAX_FLEXIBLE
+    value: "false"
   - name: INITIAL_ADMIN_EMAIL
     value: donotreply@adventistdigitallibrary.org
   - name: INITIAL_ADMIN_PASSWORD
