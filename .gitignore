@@ -13,3 +13,4 @@ file_cache/
 Gemfile.lock
 .mise.toml
 docker-compose.override.yml
+.cache/
