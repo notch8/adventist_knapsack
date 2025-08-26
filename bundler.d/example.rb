@@ -10,8 +10,3 @@
 # your docker container and rebundle to get rid of an injected gem.
 
 ensure_gem 'derivative-rodeo', '~> 0.5', '>= 0.5.3'
-
-override_gem "hyrax",
-             github: "samvera/hyrax",
-             branch: '5.0-flexible',
-             ref: '3d81004c1859edf8327c794bd2d296dde3a54438'
