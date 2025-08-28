@@ -42,6 +42,8 @@ x-app-worker: &app-worker
     args:
       BUILDKIT_INLINE_CACHE: 1
       APP_PATH: ./hyrax-webapp
+  environment:
+    - HYRAX_FLEXIBLE=false
   image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
   # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
   # command: sleep infinity
@@ -109,6 +111,8 @@ services:
 
   web:
     <<: *app
+    environment:
+      - HYRAX_FLEXIBLE=false
     extends:
       file: hyrax-webapp/docker-compose.yml
       service: web

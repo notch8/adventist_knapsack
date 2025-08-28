@@ -58,11 +58,14 @@ CatalogController.configure_blacklight do |config|
   # later load the dog biscuits translations.
   HykuKnapsack::Engine.load_translations!
 
-  # @todo remove this and list index properties individually
-  index_props = DogBiscuits.config.index_properties.collect do |prop|
-    { prop => CatalogController.send(:index_options, prop, DogBiscuits.config.property_mappings[prop]) }
-  end
-  CatalogController.send(:add_index_field, config, index_props)
+  # [:title, :creator, :part_of, :date_issued, :subject, :source, :description]
+  config.add_index_field 'title_tesim', itemprop: 'name', if: :render_in_tenant?
+  config.add_index_field 'creator_tesim', itemprop: 'creator', link_to_facet: 'creator_sim', if: :render_in_tenant?
+  config.add_index_field 'part_of_tesim', itemprop: 'partOf', link_to_facet: 'part_of_sim'
+  config.add_index_field 'date_issued_tesim', itemprop: 'dateIssued', if: :render_in_tenant?
+  config.add_index_field 'subject_tesim', itemprop: 'about', link_to_facet: 'subject_sim', if: :render_in_tenant?
+  config.add_index_field 'source_tesim', link_to_facet: 'source_sim'
+  config.add_index_field 'description_tesim', itemprop: 'description', helper_method: :truncate_and_iconify_auto_link, if: :render_in_tenant?
   config.add_index_field 'based_near_label_tesim', itemprop: 'contentLocation', link_to_facet: 'based_near_label_sim'
 
   config.search_fields.delete('all_fields')
