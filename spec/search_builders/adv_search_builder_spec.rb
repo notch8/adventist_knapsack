@@ -63,6 +63,7 @@ RSpec.describe AdvSearchBuilder do
         highlight_search_params
         show_parents_only
         include_allinson_flex_fields
+        filter_hidden_collections
       ]
     end
 
