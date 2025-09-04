@@ -349,7 +349,7 @@ extraDeploy:
               command:
                 - sh
                 - -c
-                - "db-wait.sh {{ include "hyrax.redis.host" . }}:6379"
+                - "service-wait.sh {{ include "hyrax.redis.host" . }}:6379"
             {{- if .Values.worker.extraInitContainers }}
             {{- toYaml .Values.worker.extraInitContainers | nindent 8 }}
             {{- end }}
