@@ -226,7 +226,7 @@ extraEnvVars: &envVars
   - name: SERVERLESS_SPLIT_SQS_URL
     value: sqs://us-east-1.amazonaws.com/031107666127/space-stone-production-split-ocr-thumbnail/
   - name: SERVERLESS_TEMPLATE
-    value: "{{dir_parts[-1..-1]}}/{{ basename }}{{ extension }}"
+    value: "{{ `{{dir_parts[-1..-1]}}/{{ basename }}{{ extension }}` }}"
   - name: SERVERLESS_THUMBNAIL_DLQ
     value: https://sqs.us-east-1.amazonaws.com/031107666127/space-stone-production-thumbnail-dlq
   - name: SERVERLESS_THUMBNAIL_SQS_URL
