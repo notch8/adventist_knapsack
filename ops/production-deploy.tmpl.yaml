@@ -121,6 +121,8 @@ extraEnvVars: &envVars
     value: "604800"
   - name: GOOD_JOB_CLEANUP_INTERVAL_SECONDS
     value: "86400"
+  - name: GOOGLE_ACCOUNT_JSON
+    value: $GOOGLE_ACCOUNT_JSON
   - name: HYRAX_VALKYRIE
     value: "true"
   - name: HYKU_BLOCK_VALKYRIE_REDIRECT
