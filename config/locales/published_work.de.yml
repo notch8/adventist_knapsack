@@ -1,8 +1,9 @@
+---
 de:
   hyrax:
     icons:
-      published_work:     'fa fa-file-text-o'
+      published_work: fa fa-file-text-o
     select_type:
       published_work:
-        description:        "Published work Werke"
-        name:               "Published Work"
+        description: Published work Werke
+        name: Published Work

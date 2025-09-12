@@ -41,6 +41,7 @@ de:
           title_tesim: Titel
   dog_biscuits:
     fields:
+      aark_id: AARK-Kennung
       abstract: Abstrakt
       access_provided_by: Zugang bereitgestellt von
       advisor: Berater / Betreuer
@@ -61,8 +62,10 @@ de:
       creator: Autor
       date: Datum
       date_accepted: Datum akzeptiert
+      date_available: Verfügbares Datum
       date_collected: Datum gesammelt
       date_copyrighted: Datum urheberrechtlich geschützt
+      date_created: Erstellungsdatum
       date_issued: Erscheinungsdatum (wie gedruckt)
       date_of_award: Datum der Auszeichnung
       date_published: Veröffentlichungsdatum

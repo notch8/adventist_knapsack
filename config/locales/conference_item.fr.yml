@@ -1,8 +1,9 @@
+---
 fr:
   hyrax:
     icons:
-      conference_item:     'fa fa-file-text-o'
+      conference_item: fa fa-file-text-o
     select_type:
       conference_item:
-        description:        "Conference item œuvres"
-        name:               "Conference Item"
+        description: Conference item œuvres
+        name: Conference Item

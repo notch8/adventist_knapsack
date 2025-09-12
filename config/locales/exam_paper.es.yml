@@ -1,10 +1,9 @@
+---
 es:
   hyrax:
     icons:
-      exam_paper:     'fa fa-file-text-o'
+      exam_paper: fa fa-file-text-o
     select_type:
       exam_paper:
-        # TODO: translate `human_name` into Spanish
-        description:        "Exam paper trabajos"
-        name:               "Exam Paper"
-        # TODO: translate `human_name` into Spanish
+        description: Exam paper trabajos
+        name: Exam Paper

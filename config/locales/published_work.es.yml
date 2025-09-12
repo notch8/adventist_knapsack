@@ -1,10 +1,9 @@
+---
 es:
   hyrax:
     icons:
-      published_work:     'fa fa-file-text-o'
+      published_work: fa fa-file-text-o
     select_type:
       published_work:
-        # TODO: translate `human_name` into Spanish
-        description:        "Published work trabajos"
-        name:               "Published Work"
-        # TODO: translate `human_name` into Spanish
+        description: Published work trabajos
+        name: Published Work

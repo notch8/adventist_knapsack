@@ -71,13 +71,23 @@ es:
           new: Nuevo grupo
           remove: Eliminar grupo
       title: Administración
+      work_types: Tipos de trabajo disponibles
     footer:
       admin_login: Acceso del administrador
     proprietor:
       accounts:
         nav: Cuentas
       users:
+        edit:
+          header: Edición de usuario
+        index:
+          confirm_delete: "¿Está seguro de que desea eliminar a este usuario? Esta acción no se puede deshacer."
+          header: Administrar usuarios
+          manage: Administrar
         nav: Usuarios
+        show:
+          header: Administrar usuario
+          update: Actualizar
     splash:
       account_denied: No estás autorizado para crear inquilinos.
       account_login: Inicia sesión para comenzar
@@ -102,17 +112,21 @@ es:
     admin:
       appearances:
         show:
+          custom_css_warning: Si sus personalizaciones de temas no parecen aplicarse correctamente, verifique que no estén siendo sobrescritas por CSS personalizado.
+          forms:
+            custom_css:
+              confirm: El CSS personalizado siempre prevalecerá sobre otras selecciones de temas. ¿Continuar?
           hints:
             banner_image: Para utilizar una imagen como fondo de masthead, debe utilizar una imagen (JPG, GIF o PNG) que tenga al menos 120 píxeles de alto y 1200 píxeles de ancho. Para obtener mejores resultados, utilice una imagen de al menos 1800 píxeles de ancho.
-            logo_image: Para usar una imagen como logotipo, debe usar una imagen (JPG, GIF o PNG) que no sea más alta que el encabezado y que no tenga más de 400 píxeles de ancho.
-            directory_image: Para usar una imagen como la imagen del directorio, debe usar una imagen (JPG, GIF o PNG) que no sea más alta que el encabezado y que no tenga más de 400 píxeles de ancho.
             default_image: Para las imágenes predeterminadas, debe usar una imagen (JPG, GIF o PNG) que tenga las mismas dimensiones de alto y ancho (100 píxeles de ancho y 100 píxeles de alto)
+            directory_image: Para usar una imagen como la imagen del directorio, debe usar una imagen (JPG, GIF o PNG) que no sea más alta que el encabezado y que no tenga más de 400 píxeles de ancho.
+            logo_image: Para usar una imagen como logotipo, debe usar una imagen (JPG, GIF o PNG) que no sea más alta que el encabezado y que no tenga más de 400 píxeles de ancho.
           tabs:
             banner_image: Imagen de la Bandera
-            directory_image: Imagen de directorio
-            default_images: Imágenes predeterminadas
             colors: Colores
             custom_css: Personnaliser CSS
+            default_images: Imágenes predeterminadas
+            directory_image: Imagen de directorio
             fonts: Fuentes
       sidebar:
         accounts: Cuentas
@@ -159,6 +173,7 @@ es:
         edit: Editar cuenta
         header: Administrar cuenta
         remove: Retirar
+        update: Actualizar
   status:
     index:
       services: Servicios

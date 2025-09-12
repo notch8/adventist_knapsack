@@ -41,6 +41,7 @@ zh:
           title_tesim: 标题
   dog_biscuits:
     fields:
+      aark_id: AARK 标识符
       abstract: 抽象的
       access_provided_by: 访问提供
       advisor: 顾问/主管
@@ -61,8 +62,10 @@ zh:
       creator: 作者
       date: 日期
       date_accepted: 接受日期
+      date_available: 可用日期
       date_collected: 收集日期
       date_copyrighted: 受版权保护的日期
+      date_created: 创建日期
       date_issued: 出版日期（印刷时）
       date_of_award: 获奖日期
       date_published: 发布日期
