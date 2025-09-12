@@ -1,8 +1,9 @@
+---
 fr:
   hyrax:
     icons:
-      exam_paper:     'fa fa-file-text-o'
+      exam_paper: fa fa-file-text-o
     select_type:
       exam_paper:
-        description:        "Exam paper œuvres"
-        name:               "Exam Paper"
+        description: Exam paper œuvres
+        name: Exam Paper

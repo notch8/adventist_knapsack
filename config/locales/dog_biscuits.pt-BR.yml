@@ -41,6 +41,7 @@ pt-BR:
           title_tesim: Título
   dog_biscuits:
     fields:
+      aark_id: Identificador AARK
       abstract: Resumo
       access_provided_by: Acesso fornecido por
       advisor: Conselheiro / supervisor
@@ -61,8 +62,10 @@ pt-BR:
       creator: Autor
       date: Encontro
       date_accepted: Data de aceitação
+      date_available: Data disponível
       date_collected: Data coletada
       date_copyrighted: Data protegida por direitos autorais
+      date_created: Data de criação
       date_issued: Data de publicação (conforme impresso)
       date_of_award: Data do prêmio
       date_published: Data de publicação

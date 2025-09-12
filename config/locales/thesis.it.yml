@@ -1,8 +1,9 @@
+---
 it:
   hyrax:
     icons:
-      thesis:     'fa fa-file-text-o'
+      thesis: fa fa-file-text-o
     select_type:
       thesis:
-        description:        "Thesis opere"
-        name:               "Thesis"
+        description: Thesis opere
+        name: Thesis

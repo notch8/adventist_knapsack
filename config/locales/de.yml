@@ -71,13 +71,23 @@ de:
           new: Neue Gruppe
           remove: Gruppe entfernen
       title: Verwaltung
+      work_types: Verfügbare Arbeitstypen
     footer:
       admin_login: Administratorenlogin
     proprietor:
       accounts:
         nav: Konten
       users:
+        edit:
+          header: Benutzer bearbeiten
+        index:
+          confirm_delete: Möchten Sie diesen Benutzer wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+          header: Benutzer verwalten
+          manage: Verwalten
         nav: Benutzer
+        show:
+          header: Benutzer verwalten
+          update: Aktualisieren
     splash:
       account_denied: Sie sind nicht berechtigt, Mandanten zu erstellen
       account_login: Einloggen um loszulegen
@@ -101,11 +111,22 @@ de:
     admin:
       appearances:
         show:
+          custom_css_warning: Wenn Ihre Designanpassungen nicht richtig angewendet werden, überprüfen Sie, ob sie nicht durch benutzerdefiniertes CSS überschrieben werden.
+          forms:
+            custom_css:
+              confirm: Benutzerdefiniertes CSS überschreibt immer andere Designauswahlen. Fortfahren?
           hints:
             banner_image: Um ein Bild als Überschriften-Hintergrund zu verwenden, solltest du ein Bild (JPG, GIF oder PNG) verwenden, das mindestens 120 Pixel hoch und 1200 Pixel breit ist. Für beste Ergebnisse verwenden Sie ein Bild mindestens 1800 Pixel breit.
+            default_image: Für Standardbilder sollten Sie ein Bild (JPG, GIF oder PNG) verwenden, das die gleichen Höhen- und Breitenmaße hat (100 Pixel breit und 100 Pixel hoch).
+            directory_image: Um ein Bild als Verzeichnisbild zu verwenden, sollten Sie ein Bild (JPG, GIF oder PNG) verwenden, das nicht höher als die Kopfzeile und nicht breiter als 400 Pixel ist.
+            logo_image: Um ein Bild als Logo zu verwenden, sollten Sie ein Bild (JPG, GIF oder PNG) verwenden, das nicht höher als die Kopfzeile und nicht breiter als 400 Pixel ist.
           tabs:
             banner_image: Banner Bild
             colors: Farben
+            custom_css: Benutzerdefiniertes CSS
+            default_images: Standardbilder
+            directory_image: Verzeichnisbild
+            fonts: Schriftarten
       sidebar:
         accounts: Konten
         activity_summary: Aktivitätsübersicht
@@ -156,6 +177,7 @@ de:
         edit: Konto bearbeiten
         header: Konto verwalten
         remove: Entfernen
+        update: Aktualisieren
   status:
     index:
       services: Dienste
