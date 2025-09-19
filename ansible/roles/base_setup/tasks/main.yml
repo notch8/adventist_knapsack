@@ -1,0 +1,43 @@
+---
+- name: Create storage directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - /store/keep
+    - /store/tmp
+
+- name: Mount volumes
+  mount:
+    path: "{{ item.path }}"
+    src: "{{ item.device }}"
+    fstype: ext4
+    state: mounted
+  with_items:
+    - { path: "/store/keep", device: "/dev/nvme1n1" }
+    - { path: "/store/tmp", device: "/dev/nvme2n1" }
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install required packages
+  apt:
+    name:
+      - docker.io
+      - nginx
+      - python3-dotenv-cli
+    state: present
+
+- name: Install Docker Compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/latest/download/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Add ubuntu user to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes

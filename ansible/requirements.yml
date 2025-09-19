@@ -1,0 +1,5 @@
+---
+roles:
+  - name: nginx-badbot-blocker
+    src: https://github.com/Sharlyll/Ansible-role-nginx-ultimate-bad-bot-blocker
+    version: main
