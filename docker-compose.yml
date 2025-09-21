@@ -3,7 +3,7 @@ x-app: &app
     context: .
     target: hyku-web
     cache_from:
-      - ghcr.io/samvera-labs/hyku_knapsack:latest
+      - ghcr.io/notch8/adventist_knapsack:latest
     args:
       BUILDKIT_INLINE_CACHE: 1
       APP_PATH: ./hyrax-webapp
@@ -47,21 +47,6 @@ x-app-worker: &app-worker
   image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
   # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
   # command: sleep infinity
-  depends_on:
-    check_volumes:
-      condition: service_completed_successfully
-    initialize_app:
-      condition: service_completed_successfully
-    db:
-      condition: service_started
-    solr:
-      condition: service_started
-    fcrepo:
-      condition: service_started
-    redis:
-      condition: service_started
-    zoo:
-      condition: service_started
 
 volumes:
   assets:
@@ -116,25 +101,6 @@ services:
     extends:
       file: hyrax-webapp/docker-compose.yml
       service: web
-    depends_on:
-      db:
-        condition: service_started
-      solr:
-        condition: service_started
-      fcrepo:
-        condition: service_started
-      redis:
-        condition: service_started
-      zoo:
-        condition: service_started
-      check_volumes:
-        condition: service_started
-      chrome:
-        condition: service_started
-      worker:
-        condition: service_started
-      initialize_app:
-        condition: service_completed_successfully
 
   worker:
     <<: *app-worker
