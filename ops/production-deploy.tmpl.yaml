@@ -474,10 +474,11 @@ externalPostgresql:
 externalSolrHost: solr.default.cluster.local
 externalSolrUser: admin
 externalSolrPassword: $SOLR_ADMIN_PASSWORD
+externalSolrPort: "8983"
 externalSolrCollection: "hyku-adventist-production"
 
 global:
-  hyraxName: adventist-knapsack-production-hyrax
+  hyraxHostName: adventist-knapsack-production-hyrax
 
 nginx:
   service:
@@ -489,7 +490,7 @@ nginx:
     tag: 1.21.6-debian-11-r21
   serverBlock: |-
     upstream rails_app {
-      server {{ .Values.global.hyraxName }};
+      server {{ .Values.global.hyraxHostName }};
     }
 
     map ${DOLLAR}status ${DOLLAR}loggable {
