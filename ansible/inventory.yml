@@ -1,0 +1,9 @@
+---
+all:
+  children:
+    adventist_servers:
+      hosts:
+        adventist2025:
+          ansible_host: ####### ADD IP ADDRESS OF SERVER HERE #######
+          ansible_user: ubuntu
+          ansible_ssh_private_key_file: ~/.ssh/adventist-nadcloud
