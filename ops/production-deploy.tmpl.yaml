@@ -11,10 +11,10 @@ resources:
 livenessProbe:
   enabled: false
 readinessProbe:
-  enabled: false
-  # path: "/healthz"
-  # periodSeconds: 30
-  # timeoutSeconds: 10
+  enabled: true
+  path: "/healthz"
+  periodSeconds: 30
+  timeoutSeconds: 10
 
 brandingVolume:
   storageClass: efs-sc
