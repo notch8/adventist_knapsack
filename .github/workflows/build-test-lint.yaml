@@ -11,34 +11,35 @@ on:
     inputs:
       debug_step:
         required: false
-        description: "Pause the selected step to debug using tmate"
+        description: 'Pause the selected step to debug using tmate'
         type: choice
-        default: ""
+        default: ''
         options:
-          - ""
+          - ''
           - build
           - test
           - lint
 
 jobs:
   build:
-    uses: notch8/actions/.github/workflows/build.yaml@v0.0.23
+    uses: notch8/actions/.github/workflows/build.yaml@v1.0.4
     secrets: inherit
     with:
       platforms: "linux/amd64"
-      webTarget: hyku-base
+      webTarget: hyku-web
       workerTarget: hyku-worker
+
   test:
     needs: build
-    uses: notch8/actions/.github/workflows/test.yaml@v0.0.23
+    uses: notch8/actions/.github/workflows/test.yaml@v1.0.4
     with:
-      confdir: "/app/samvera/hyrax-webapp/solr/conf"
+      confdir: '/app/samvera/hyrax-webapp/solr/conf'
       rspec_cmd: "cd .. && gem install semaphore_test_boosters && bundle && rspec_booster --job $CI_NODE_INDEX/$CI_NODE_TOTAL"
 
   lint:
     needs: build
-    uses: notch8/actions/.github/workflows/lint.yaml@v0.0.23
+    uses: notch8/actions/.github/workflows/lint.yaml@v1.0.4
     with:
       webTarget: hyku-web
       workerTarget: hyku-worker
-      rubocop_cmd: "cd .. && bundle && bundle exec rubocop --parallel --format progress"
+      rubocop_cmd: "cd .. && bundle && bundle exec rubocop --parallel --format progress --format junit --out rubocop.xml"
