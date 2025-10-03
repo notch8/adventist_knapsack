@@ -8,3 +8,4 @@ files/staging.key
 files/staging.cer
 files/prod.key
 files/prod.cer
+files/ansible_become_password
