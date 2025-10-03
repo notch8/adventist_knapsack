@@ -1,0 +1,16 @@
+---
+all:
+  children:
+    adventist_servers:
+      hosts:
+        staging:
+          ansible_host: 192.168.147.200
+          ansible_user: adlquantum6269
+          ansible_ssh_private_key_file: files/id_rsa
+        # prod:
+        #   ansible_host: 192.168.147.100
+        #   ansible_user: adlquantum6269
+        #   ansible_ssh_private_key_file: files/id_rsa
+
+# ssh-copy-id -i /Users/aprilrieger/n8/adventist_knapsack/provision/files/id_rsa.pub adlquantum6269@192.168.147.200
+

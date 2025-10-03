@@ -1,0 +1,35 @@
+#!/bin/bash
+# op document create files/id_rsa --title DEPLOY_ID_RSA --vault "ADVENTIST"
+# op document create files/staging.key --title ADVENTIST_STAGING_SSL_KEY --vault "ADVENTIST"
+# op document create files/staging.cer --title ADVENTIST_STAGING_SSL_CER --vault "ADVENTIST"
+# op document create files/ghcr_token --title GHCR_TOKEN --vault "ADVENTIST"
+# op document create files/ansible_become_password --title ANSIBLE_BECOME_PASSWORD --vault "ADVENTIST"
+if [ ! -f "files/id_rsa" ]; then
+  op document get DEPLOY_ID_RSA --out-file files/id_rsa
+fi
+if [ ! -f "files/staging.key" ]; then
+  op document get ADVENTIST_STAGING_SSL_KEY --out-file files/staging.key
+fi
+if [ ! -f "files/staging.cer" ]; then
+  op document get ADVENTIST_STAGING_SSL_CER --out-file files/staging.cer
+fi
+if [ ! -f "files/ghcr_token" ]; then
+  op document get GHCR_TOKEN --out-file files/ghcr_token
+fi
+if [ ! -f "files/ansible_become_password" ]; then
+  op document get ANSIBLE_BECOME_PASSWORD --out-file files/ansible_become_password
+fi
+# ansible-playbook -i inventory.yml site.yml --check
+ansible-playbook site.yml -i inventory.yml
+
+
+# TODO: How to call by env dynamically
+# op document create files/prod.key --title ADVENTIST_PROD_SSL_KEY --vault "ADVENTIST"
+# op document create files/prod.cer --title ADVENTIST_PROD_SSL_CER --vault "ADVENTIST"
+
+# if [ ! -f "files/prod.key" ]; then
+#   op document get ADVENTIST_PROD_SSL_KEY --out-file files/prod.key
+# fi
+# if [ ! -f "files/prod.cer" ]; then
+#   op document get ADVENTIST_PROD_SSL_CER --out-file files/prod.cer
+# fi
