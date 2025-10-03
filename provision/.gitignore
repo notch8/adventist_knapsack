@@ -1,0 +1,10 @@
+.aider*
+.env
+vars/main.yml
+files/ghcr_token
+files/id_rsa
+files/id_rsa.pub
+files/staging.key
+files/staging.cer
+files/prod.key
+files/prod.cer

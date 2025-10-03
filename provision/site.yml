@@ -15,14 +15,14 @@
 
     - name: Copy SSL certificate
       copy:
-        src: files/b2_adventistdigitallibrary_org_2024_complete.cer
-        dest: /etc/ssl/b2_adventistdigitallibrary_org_2024_complete.cer
+        src: files/staging.cer
+        dest: /etc/ssl/staging.cer
         mode: '0644'
 
     - name: Copy SSL key
       copy:
-        src: files/b2.adventistdigitallibrary.org.2024.key
-        dest: /etc/ssl/private/b2.adventistdigitallibrary.org.2024.key
+        src: files/staging.key
+        dest: /etc/ssl/private/staging.key
         mode: '0600'
 
     - name: Copy nginx configuration
@@ -54,9 +54,12 @@
       authorized_key:
         user: "{{ item.name }}"
         state: present
-        key: "https://github.com/{{ item.github }}.keys"
-      with_items:
-        "{{ ssh_users }}"
+        key: "{{ lookup('url', 'https://github.com/' ~ item.github ~ '.keys', split_lines=False) }}"
+        manage_dir: yes
+      loop: "{{ ssh_users }}"
+      loop_control:
+        label: "{{ item.name }} ← {{ item.github }}"
+      tags: github_keys
 
     - name: Configure Docker login
       docker_login:

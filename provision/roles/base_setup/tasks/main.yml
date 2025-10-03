@@ -1,22 +1,23 @@
 ---
-- name: Create storage directories
+- name: Ensure storage directories exist
   file:
-    path: "{{ item }}"
-    state: directory
-    mode: '0755'
-  with_items:
-    - /store/keep
-    - /store/tmp
-
-- name: Mount volumes
-  mount:
     path: "{{ item.path }}"
-    src: "{{ item.device }}"
-    fstype: ext4
+    state: directory
+    mode: "0755"
+  loop: "{{ adventist_mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Mount volumes and persist (UUID-based)
+  ansible.posix.mount:
+    path: "{{ item.path }}"
+    src: "UUID={{ item.uuid }}"
+    fstype: "{{ item.fstype | default('xfs') }}"
+    opts: "{{ item.opts  | default('defaults,noatime') }}"
     state: mounted
-  with_items:
-    - { path: "/store/keep", device: "/dev/nvme1n1" }
-    - { path: "/store/tmp", device: "/dev/nvme2n1" }
+  loop: "{{ adventist_mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
 
 - name: Update apt cache
   apt:
@@ -36,8 +37,8 @@
     dest: /usr/local/bin/docker-compose
     mode: '0755'
 
-- name: Add ubuntu user to docker group
+- name: Add adlquantum6269 user to docker group
   user:
-    name: ubuntu
+    name: adlquantum6269
     groups: docker
     append: yes
