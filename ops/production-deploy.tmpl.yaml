@@ -148,7 +148,7 @@ extraEnvVars: &envVars
   - name: HYKU_MULTITENANT
     value: "true"
   - name: HYKU_QUEUED_RUNNER
-    value: "true"
+    value: "false"
   - name: HYKU_ROOT_HOST
     value: b2.adventistdigitallibrary.org
   - name: HYRAX_ACTIVE_JOB_QUEUE
