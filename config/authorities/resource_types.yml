@@ -15,6 +15,8 @@ terms:
     term: Dissertation
   - id: Image
     term: Image
+  - id: Issue
+    term: Issue
   - id: Journal
     term: Journal
   - id: Map or Cartographic Material
