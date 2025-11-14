@@ -8,6 +8,7 @@ x-app: &app
       BUILDKIT_INLINE_CACHE: 1
       APP_PATH: ./hyrax-webapp
   image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
+  platform: "linux/amd64"
   env_file:
     - .env
     - .env.development
@@ -45,6 +46,7 @@ x-app-worker: &app-worker
   environment:
     - HYRAX_FLEXIBLE=false
   image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
+  platform: "linux/amd64"
   # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
   # command: sleep infinity
 
@@ -109,7 +111,7 @@ services:
     <<: *app-worker
     environment:
       - AUX_WORKER="true"
-      - AUXILIARY_QUEUE_TENANTS="sdapi" # This line is what makes the knapsack include use the local code instead of the remote gem
+      - AUXILIARY_QUEUE_TENANTS="sdapi"
       - AWS_REGION=us-east-1
       - AWS_S3_BUCKET=space-stone-production-preprocessedbucketf21466dd-15sun4xy658nh
       - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
