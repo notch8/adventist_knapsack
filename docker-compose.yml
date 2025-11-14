@@ -8,7 +8,6 @@ x-app: &app
       BUILDKIT_INLINE_CACHE: 1
       APP_PATH: ./hyrax-webapp
   image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
-  platforms: "linux/amd64"
   env_file:
     - .env
     - .env.development
@@ -46,7 +45,6 @@ x-app-worker: &app-worker
   environment:
     - HYRAX_FLEXIBLE=false
   image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
-  platforms: "linux/amd64"
   # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
   # command: sleep infinity
 
