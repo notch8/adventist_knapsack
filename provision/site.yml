@@ -5,32 +5,234 @@
   vars_files:
     - vars/main.yml
 
+  pre_tasks:
+    - name: Configure DNS servers (uncomment and set DNS)
+      replace:
+        path: /etc/systemd/resolved.conf
+        regexp: '^#?DNS=.*'
+        replace: 'DNS=1.1.1.1 8.8.8.8'
+      notify: restart systemd-resolved
+
+    - name: Configure DNS servers (uncomment and set FallbackDNS)
+      replace:
+        path: /etc/systemd/resolved.conf
+        regexp: '^#?FallbackDNS=.*'
+        replace: 'FallbackDNS=9.9.9.9 1.0.0.1'
+      notify: restart systemd-resolved
+
+    - name: Flush handlers to apply DNS changes immediately
+      meta: flush_handlers
+
   roles:
     - role: base_setup
       tags: base
-    - role: nginx-badbot-blocker
-      tags: nginx
 
   tasks:
+    - name: Ensure storage directories exist
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ environments[env].mounts }}"
+      loop_control:
+        label: "{{ item.path }}"
 
-    - name: Copy SSL certificate
-      copy:
-        src: files/staging.cer
-        dest: /etc/ssl/staging.cer
-        mode: '0644'
+    - name: Mount volumes and persist (UUID-based)
+      ansible.posix.mount:
+        path: "{{ item.path }}"
+        src: "UUID={{ item.uuid }}"
+        fstype: "{{ item.fstype | default('xfs') }}"
+        opts: "{{ item.opts  | default('defaults,noatime') }}"
+        state: mounted
+      loop: "{{ environments[env].mounts }}"
+      loop_control:
+        label: "{{ item.path }}"
 
-    - name: Copy SSL key
+    - name: Update apt cache
+      apt:
+
+    - name: Install required packages
+      apt:
+        name:
+          - certbot
+          - docker.io
+          - git
+          - nginx
+          - python3-dotenv-cli
+          - python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install certbot-dns-cloudflare via pip
+      pip:
+        name: certbot-dns-cloudflare
+        state: present
+      tags: certbot
+
+    - name: Create Cloudflare credentials directory
+      file:
+        path: /root/.secrets/certbot
+        state: directory
+        mode: '0700'
+        owner: root
+        group: root
+      tags: certbot
+
+    - name: Copy Cloudflare credentials file
       copy:
-        src: files/staging.key
-        dest: /etc/ssl/private/staging.key
+        src: files/cloudflare.ini
+        dest: /root/.secrets/certbot/cloudflare.ini
         mode: '0600'
+        owner: root
+        group: root
+      tags: certbot
 
-    - name: Copy nginx configuration
-      copy:
-        src: files/nginx-default
+    - name: Generate Let's Encrypt certificate with Cloudflare DNS
+      command: >
+        certbot certonly --dns-cloudflare
+        --dns-cloudflare-credentials /root/.secrets/certbot/cloudflare.ini
+        --non-interactive --agree-tos
+        -m admin@adventistdigitallibrary.org
+        -d {{ environments[env].hostnames | join(' -d ') }}
+      args:
+        creates: "/etc/letsencrypt/live/{{ environments[env].hostnames[0] }}/fullchain.pem"
+      tags: certbot
+
+    - name: Setup Certbot auto-renewal cron job
+      cron:
+        name: "Certbot renewal"
+        minute: "0"
+        hour: "3"
+        job: "certbot renew --quiet && systemctl reload nginx"
+        state: present
+      tags: certbot
+
+    - name: Set environment-specific variables for templates
+      set_fact:
+        hyku_admin_host: "{{ environments[env].hyku_admin_host }}"
+        hyku_default_host: "{{ environments[env].hyku_admin_host | replace(environments[env].hyku_admin_host.split('.')[0], '%{tenant}') }}"
+        hyku_root_host: "{{ environments[env].hyku_admin_host }}"
+
+    - name: Deploy Nginx configuration
+      template:
+        src: files/nginx-default.j2
         dest: /etc/nginx/sites-enabled/default
         mode: '0644'
       notify: restart nginx
+      tags: [nginx, certbot]
+
+    - name: Ensure adventist_knapsack directory exists
+      file:
+        path: /store/keep/adventist_knapsack
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Check if git repository already exists
+      stat:
+        path: /store/keep/adventist_knapsack/.git
+      register: git_repo_check
+
+    - name: Clone git repository if not already cloned
+      git:
+        repo: "{{ git_repo_url }}"
+        dest: /store/keep/adventist_knapsack
+        version: main
+        update: no
+        accept_hostkey: yes
+      when: not git_repo_check.stat.exists
+
+    - name: Set environment-specific variables for templates
+      set_fact:
+        hyku_admin_host: "{{ environments[env].hyku_admin_host }}"
+        hyku_default_host: "{{ environments[env].hyku_admin_host | replace(environments[env].hyku_admin_host.split('.')[0], '%{tenant}') }}"
+        hyku_root_host: "{{ environments[env].hyku_admin_host }}"
+
+    - name: Render environment file for Docker
+      template:
+        src: files/.env.j2
+        dest: /store/keep/adventist_knapsack/.env.production
+        owner: root
+        group: root
+        mode: '0600'
+
+    - name: Ensure Docker Compose (Compose V2) is installed
+      block:
+
+        - name: Ensure apt cache is up-to-date
+          apt:
+            update_cache: yes
+          when: ansible_facts['pkg_mgr'] == 'apt'
+
+        - name: Check if 'docker-compose-plugin' package is available
+          command: apt-cache policy docker-compose-plugin
+          register: compose_policy
+          failed_when: false
+          changed_when: false
+          when: ansible_facts['pkg_mgr'] == 'apt'
+
+        - name: Install docker-compose-plugin via apt if available
+          apt:
+            name: docker-compose-plugin
+            state: present
+            update_cache: no
+          when:
+            - ansible_facts['pkg_mgr'] == 'apt'
+            - compose_policy is defined
+            - "'Candidate:' in compose_policy.stdout and 'Candidate: (none)' not in compose_policy.stdout"
+          register: compose_pkg_install
+          failed_when: false
+
+        - name: Set Compose plugin install path
+          set_fact:
+            compose_plugin_path: /usr/local/lib/docker/cli-plugins/docker-compose
+
+        - name: Determine compose download architecture (single-line, no newlines)
+          set_fact:
+            compose_download_arch: >-
+              {{ ('linux-x86_64'
+                  if ansible_architecture in ['x86_64','amd64']
+                  else ('linux-aarch64' if ansible_architecture in ['aarch64','arm64']
+                        else ansible_architecture)) }}
+
+        - name: Create CLI plugins dir (fallback install)
+          file:
+            path: "{{ compose_plugin_path | dirname }}"
+            state: directory
+            mode: '0755'
+          when: compose_pkg_install is not defined or compose_pkg_install is failed or compose_pkg_install is skipped
+
+        - name: Download Docker Compose (CLI plugin binary) as fallback
+          get_url:
+            url: "https://github.com/docker/compose/releases/latest/download/docker-compose-{{ compose_download_arch }}"
+            dest: "{{ compose_plugin_path }}"
+            mode: '0755'
+            force: no
+            validate_certs: yes
+          when: compose_pkg_install is not defined or compose_pkg_install is failed or compose_pkg_install is skipped
+
+        - name: Ensure plugin owned and executable
+          file:
+            path: "{{ compose_plugin_path }}"
+            owner: root
+            group: root
+            mode: '0755'
+          when: compose_pkg_install is not defined or compose_pkg_install is failed or compose_pkg_install is skipped
+
+        - name: Verify 'docker compose' is available
+          command: docker compose version
+          register: compose_verify
+          failed_when: compose_verify.rc != 0
+          changed_when: false
+
+      become: true
+
+    - name: Add adlquantum6269 user to docker group
+      user:
+        name: adlquantum6269
+        groups: docker
+        append: yes
 
     - name: Create user accounts
       user:
@@ -38,8 +240,7 @@
         state: present
         create_home: yes
         groups: adm,sudo,docker
-      with_items:
-        "{{ ssh_users }}"
+      loop: "{{ ssh_users }}"
 
     - name: Configure sudo without password
       copy:
@@ -47,18 +248,30 @@
         content: "{{ item.name }} ALL=(ALL) NOPASSWD:ALL"
         mode: '0440'
         validate: /usr/sbin/visudo -cf %s
-      with_items:
-        "{{ ssh_users }}"
+      loop: "{{ ssh_users }}"
 
-    - name: set up github keys
-      authorized_key:
-        user: "{{ item.name }}"
-        state: present
-        key: "{{ lookup('url', 'https://github.com/' ~ item.github ~ '.keys', split_lines=False) }}"
-        manage_dir: yes
+    - name: Fetch GitHub SSH keys on remote host
+      ansible.builtin.uri:
+        url: "https://github.com/{{ item.github }}.keys"
+        return_content: yes
+        status_code: [200, 404]
+        validate_certs: yes
+      register: github_key
       loop: "{{ ssh_users }}"
       loop_control:
         label: "{{ item.name }} ← {{ item.github }}"
+      tags: github_keys
+
+    - name: Install fetched GitHub keys into users' authorized_keys (remote)
+      authorized_key:
+        user: "{{ item.item.name }}"
+        state: present
+        key: "{{ item.content | default('') }}"
+        manage_dir: yes
+      when: item.status == 200 and (item.content is defined) and (item.content | length > 0)
+      loop: "{{ github_key.results }}"
+      loop_control:
+        label: "{{ item.item.name }} ← {{ item.item.github }}"
       tags: github_keys
 
     - name: Configure Docker login
@@ -67,16 +280,20 @@
         username: orangewolf
         password: "{{ ghcr_token }}"
 
-    - name: Copy deploy key
-      copy:
-        src: files/id_rsa
-        dest: /root/.ssh/id_rsa
-        mode: '0600'
-        owner: root
-        group: root
-
   handlers:
+    - name: restart systemd-resolved
+      systemd:
+        name: systemd-resolved
+        state: restarted
+      when: ansible_facts['service_mgr'] == 'systemd'
+
     - name: restart nginx
       service:
         name: nginx
         state: restarted
+
+  post_tasks:
+    - name: Run nginx-badbot-blocker
+      import_role:
+        name: nginx-badbot-blocker
+      tags: [nginx, badbot]

@@ -7,10 +7,12 @@ all:
           ansible_host: 192.168.147.200
           ansible_user: adlquantum6269
           ansible_ssh_private_key_file: files/id_rsa
-        # prod:
-        #   ansible_host: 192.168.147.100
-        #   ansible_user: adlquantum6269
-        #   ansible_ssh_private_key_file: files/id_rsa
+          ansible_python_interpreter: /usr/bin/python3.10
+        production:
+          ansible_host: 192.168.147.100
+          ansible_user: adlquantum6269
+          ansible_ssh_private_key_file: files/id_rsa
+          ansible_python_interpreter: /usr/bin/python3.10
 
 # ssh-copy-id -i /Users/aprilrieger/n8/adventist_knapsack/provision/files/id_rsa.pub adlquantum6269@192.168.147.200
-
+# ssh-copy-id -i /Users/aprilrieger/n8/adventist_knapsack/provision/files/id_rsa.pub adlquantum6269@192.168.147.100

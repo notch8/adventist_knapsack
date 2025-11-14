@@ -3,7 +3,7 @@ galaxy_info:
   author: Notch8
   description: Base setup for Adventist Hyku servers
   license: MIT
-  min_ansible_version: 2.9
+  min_ansible_version: "2.9"
   platforms:
     - name: Ubuntu
       versions:
