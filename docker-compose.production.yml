@@ -2,9 +2,9 @@ x-app: &app
   user: root
   image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
   env_file:
-    - .env.production
+    - .env
   volumes:
-    - .:/app/samvera/hyrax-webapp
+    - .:/app/samvera
     - ./store/keep/derivatives:/app/samvera/derivatives
     - ./store/keep/branding:/app/samvera/branding
     - ./store/keep/exports:/app/samvera/hyrax-webapp/tmp/exports/
@@ -17,6 +17,7 @@ x-app: &app
     - ./store/keep/public-system:/app/samvera/hyrax-webapp/public/system
     - ./store/keep/public-uploads:/app/samvera/hyrax-webapp/public/uploads
     - ./store/tmp/fast-tmp:/app/samvera/hyrax-webapp/tmp/fast-tmp
+    - ./cache:/app/samvera/hyrax-webapp/tmp/cache
   networks:
     internal:
   logging:
@@ -68,11 +69,8 @@ services:
 
   solr:
     image: hyku/solr:8
-    build:
-      context: solr
-      dockerfile: Dockerfile
     env_file:
-      - .env.production
+      - .env
     environment:
       - OOM=script
       - SOLR_ADMIN_USER=${SOLR_ADMIN_USER}
@@ -113,11 +111,11 @@ services:
     volumes:
       - ./store/keep/fcrepo_data:/data:cached
     env_file:
-      - .env.production
+      - .env
     environment:
       - JAVA_OPTIONS=-Daws.bucket=lib-lts-hyrax -Daws.accessKeyId=${FCREPO_AWS_KEY} -Daws.secretKey=${FCREPO_AWS_SECRET} -Dfcrepo.postgresql.host=db -Dfcrepo.postgresql.username=hyrax -Dfcrepo.postgresql.password=${FCREPO_DB_PASSWORD} -Dfcrepo.object.directory=/data/objects -Djava.io.tmpdir=/data/tmp -Dfcrepo.binary.directory=/data/binary -Xms16G -Xmx16G
       - MODESHAPE_CONFIG=classpath:/config/jdbc-postgresql-s3/repository.json
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_PASSWORD=${DB_PASSWORD}
     expose:
       - 8080
     networks:
@@ -127,7 +125,7 @@ services:
   db:
     image: postgres:11.1
     env_file:
-      - .env.production
+      - .env
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -201,10 +199,11 @@ services:
     entrypoint: ["sh", "-c"]
     command:
       - >
-        solrcloud-upload-configset.sh /app/samvera/hyrax-webapp/solr/conf &&
-        solrcloud-assign-configset.sh &&
-        SOLR_COLLECTION_NAME=hydra-test solrcloud-assign-configset.sh &&
-        db-migrate-seed.sh
+        /app/samvera/bin/solrcloud-upload-configset.sh /app/samvera/hyrax-webapp/solr/conf &&
+        /app/samvera/bin/solrcloud-assign-configset.sh &&
+        SOLR_COLLECTION_NAME=hydra-test /app/samvera/bin/solrcloud-assign-configset.sh &&
+        bundle &&
+        /app/samvera/bin/db-migrate-seed.sh
     depends_on:
       db:
         condition: service_started
