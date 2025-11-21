@@ -3,6 +3,7 @@ FROM ghcr.io/samvera/hyrax/hyrax-base:$HYRAX_IMAGE_VERSION AS hyku-web
 
 USER root
 RUN git config --system --add safe.directory \*
+ENV PATH="/app/samvera/bin:${PATH}"
 
 USER app
 ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
