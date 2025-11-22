@@ -11,7 +11,7 @@ x-app: &app
     - /store/keep/imports:/app/samvera/hyrax-webapp/tmp/imports/
     - /store/tmp/network-files:/app/samvera/hyrax-webapp/tmp/network-files/
     - /store/tmp/public-assets:/app/samvera/hyrax-webapp/public/assets
-    - /store/tmp/public-uv:/app/samvera/hyrax-webapp/public/uv
+    # /store/tmp/public-uv:/app/samvera/hyrax-webapp/public/uv
     - /store/tmp/uploads:/app/samvera/uploads
     - /store/tmp/uploads:/app/samvera/hyrax-webapp/tmp/uploads
     - /store/keep/public-system:/app/samvera/hyrax-webapp/public/system
@@ -187,19 +187,7 @@ services:
       - >
         chown -R app:app /app/samvera/hyrax-webapp/public/uploads &&
         chown -R app:app /app/samvera/hyrax-webapp/public/assets &&
-        chown -R app:app /app/samvera/hyrax-webapp/tmp/cache &&
-        chown -R app:app /app/samvera/derivatives &&
-        chown -R app:app /app/samvera/branding &&
-        chown -R app:app /app/samvera/hyrax-webapp/tmp/exports &&
-        chown -R app:app /app/samvera/hyrax-webapp/tmp/imports &&
-        chown -R app:app /app/samvera/hyrax-webapp/tmp/network-files &&
-        chown -R app:app /app/samvera/hyrax-webapp/public/uv &&
-        chown -R app:app /app/samvera/uploads &&
-        chown -R app:app /app/samvera/hyrax-webapp/tmp/uploads &&
-        chown -R app:app /app/samvera/hyrax-webapp/public/system &&
-        chown -R app:app /app/samvera/hyrax-webapp/public/uploads &&
-        chown -R app:app /app/samvera/hyrax-webapp/tmp/fast-tmp
-
+        chown -R app:app /app/samvera/hyrax-webapp/tmp/cache
   initialize_app:
     <<: *app
     environment:
