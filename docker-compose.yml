@@ -69,6 +69,7 @@ services:
     extends:
       file: hyrax-webapp/docker-compose.yml
       service: adminer
+
   zoo:
     extends:
       file: hyrax-webapp/docker-compose.yml
@@ -109,8 +110,7 @@ services:
     <<: *app-worker
     environment:
       - AUX_WORKER="true"
-      - AUXILIARY_QUEUE_TENANTS="sdapi" # This line is what makes the knapsack include use the local code instead of the remote gem
-      - AWS_REGION=us-east-1
+      - AUXILIARY_QUEUE_TENANTS="sdapi"
       - AWS_S3_BUCKET=space-stone-production-preprocessedbucketf21466dd-15sun4xy658nh
       - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
       - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400

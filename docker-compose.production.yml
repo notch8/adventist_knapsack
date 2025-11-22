@@ -1,0 +1,221 @@
+x-app: &app
+  user: root
+  image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
+  env_file:
+    - .env.production
+  volumes:
+    - .:/app/samvera
+    - /store/keep/derivatives:/app/samvera/derivatives
+    - /store/keep/branding:/app/samvera/branding
+    - /store/keep/exports:/app/samvera/hyrax-webapp/tmp/exports/
+    - /store/keep/imports:/app/samvera/hyrax-webapp/tmp/imports/
+    - /store/tmp/network-files:/app/samvera/hyrax-webapp/tmp/network-files/
+    - /store/tmp/public-assets:/app/samvera/hyrax-webapp/public/assets
+    # /store/tmp/public-uv:/app/samvera/hyrax-webapp/public/uv
+    - /store/tmp/uploads:/app/samvera/uploads
+    - /store/tmp/uploads:/app/samvera/hyrax-webapp/tmp/uploads
+    - /store/keep/public-system:/app/samvera/hyrax-webapp/public/system
+    - /store/keep/public-uploads:/app/samvera/hyrax-webapp/public/uploads
+    - /store/tmp/fast-tmp:/app/samvera/hyrax-webapp/tmp/fast-tmp
+    - /cache:/app/samvera/hyrax-webapp/tmp/cache
+  networks:
+    internal:
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "3g"
+
+networks:
+  internal:
+
+services:
+  fits:
+    image: harvardlts/fitsservlet_container:1.5.0
+    ports:
+      - 9090:8080
+    networks:
+      internal:
+
+  zoo:
+    image: zookeeper:3.6.2
+    restart: unless-stopped
+    environment:
+      - ZOO_MY_ID=1
+      - ZOO_SERVERS=server.1=zoo:2888:3888;2181
+      - ZOO_4LW_COMMANDS_WHITELIST=mntr,srvr,ruok,conf
+    expose:
+      - 2181
+      - 2888
+      - 3888
+      - 7000
+    ports:
+      - 2181:2181
+      - 7001:7000
+    volumes:
+      - /store/keep/zoo_data:/data
+      - /store/keep/zoo_datalog:/datalog
+    networks:
+      internal:
+        aliases:
+          - zookeeper_cluster
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "echo 'ruok' | nc -w 2 -q 2 localhost 2181 | grep imok || exit 1",
+        ]
+      interval: "10s"
+      timeout: "8s"
+
+  solr:
+    image: ghcr.io/samvera/hyku/solr:latest
+    env_file:
+      - .env.production
+    environment:
+      - OOM=script
+      - SOLR_ADMIN_USER=${SOLR_ADMIN_USER}
+      - SOLR_ADMIN_PASSWORD=${SOLR_ADMIN_PASSWORD}
+      - SOLR_COLLECTION_NAME=${SOLR_COLLECTION_NAME}
+      - SOLR_CLOUD_BOOTSTRAP=yes
+      - SOLR_ENABLE_CLOUD_MODE=yes
+      - SOLR_ENABLE_AUTHENTICATION=yes
+      - ZK_HOST=zoo:2181
+      - SOLR_HEAP=6G
+    user: root
+    command: bash -c "
+      chown -R 8983:8983 /var/solr
+      && ./bin/solr zk cp file:/var/solr/data/security.json zk:/security.json
+      && runuser -u solr -- solr-foreground"
+    expose:
+      - 8983
+    volumes:
+      - /store/keep/solr-data:/var/solr
+        #- /solr/security.json:/var/solr/data/security.json
+    ports:
+      - 8983:8983
+    networks:
+      internal:
+    healthcheck:
+      test: curl -sf http://$$SOLR_ADMIN_USER:$$SOLR_ADMIN_PASSWORD@solr:8983/solr/admin/cores?action=STATUS || exit 1
+      start_period: 3s
+      interval: 5s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      zoo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  fcrepo:
+    image: ghcr.io/samvera/fcrepo4:4.7.5
+    volumes:
+      - /store/keep/fcrepo_data:/data:cached
+    env_file:
+      - .env.production
+    environment:
+      - JAVA_OPTS=${JAVA_OPTS} -Dfcrepo.modeshape.configuration="classpath:/config/jdbc-postgresql/repository.json" -Dfcrepo.postgresql.host=db -Dfcrepo.postgresql.username=${DB_USER} -Dfcrepo.postgresql.password=${DB_PASSWORD:-hyku} -Dfcrepo.object.directory="/data/objects" -Dfcrepo.binary.directory="/data/fcrepo.binary.directory" -Djava.io.tmpdir="/data/tmp"
+    expose:
+      - 8080
+    networks:
+      internal:
+
+  db:
+    image: postgres:11.1
+    env_file:
+      - .env.production
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
+    volumes:
+      - /store/keep/db_data:/var/lib/postgresql/data
+    networks:
+      internal:
+
+  web:
+    <<: *app
+    depends_on:
+      db:
+        condition: service_started
+      solr:
+        condition: service_started
+      fcrepo:
+        condition: service_started
+      redis:
+        condition: service_started
+      zoo:
+        condition: service_started
+      check_volumes:
+        condition: service_started
+      worker:
+        condition: service_started
+      initialize_app:
+        condition: service_completed_successfully
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+
+  worker:
+    <<: *app
+    image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
+    depends_on:
+      check_volumes:
+        condition: service_completed_successfully
+      initialize_app:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      solr:
+        condition: service_started
+      fcrepo:
+        condition: service_started
+      redis:
+        condition: service_started
+      zoo:
+        condition: service_started
+    restart: unless-stopped
+
+  # Do not recurse through all of tmp. derivatives will make booting
+  # very slow and eventually just time out as data grows
+  check_volumes:
+    <<: *app
+    user: root
+    entrypoint: ["sh", "-x", "-c"]
+    command:
+      - >
+        chown -R app:app /app/samvera/hyrax-webapp/public/uploads &&
+        chown -R app:app /app/samvera/hyrax-webapp/public/assets &&
+        chown -R app:app /app/samvera/hyrax-webapp/tmp/cache
+  initialize_app:
+    <<: *app
+    environment:
+      - CONFDIR=/app/samvera/hyrax-webapp/solr/conf
+    entrypoint: ["sh", "-c"]
+    command:
+      - >
+        /app/samvera/bin/solrcloud-upload-configset.sh /app/samvera/hyrax-webapp/solr/conf &&
+        /app/samvera/bin/solrcloud-assign-configset.sh &&
+        SOLR_COLLECTION_NAME=hydra-test /app/samvera/bin/solrcloud-assign-configset.sh &&
+        bundle &&
+        /app/samvera/bin/db-migrate-seed.sh
+    depends_on:
+      db:
+        condition: service_started
+      solr:
+        condition: service_healthy
+      fcrepo:
+        condition: service_started
+      redis:
+        condition: service_started
+
+  redis:
+    image: redis:5
+    env_file:
+      - .env.production
+    command: sh -c 'redis-server --requirepass "$REDIS_PASSWORD"'
+    volumes:
+      - /store/keep/redis_data:/data
+    networks:
+      internal:

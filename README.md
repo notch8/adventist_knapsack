@@ -127,7 +127,6 @@ Below is an example of our Adventist Knapsack submodule.
 [submodule "hyrax-webapp"]
 	path = hyrax-webapp
 	url = https://github.com/samvera/hyku.git
-	branch = adventist_dev
 ```
 
 When you want to bring down an updated version of your Hyku submodule, use the following:
@@ -242,3 +241,57 @@ Contribution directions go here.
 ## License
 
 The gem is available as open source under the terms of the [Apache 2.0](https://opensource.org/license/apache-2-0/).
+
+
+
+
+
+# This is /run/systemd/resolve/stub-resolv.conf managed by man:systemd-resolved(8).
+# Do not edit.
+#
+# This file might be symlinked as /etc/resolv.conf. If you're looking at
+# /etc/resolv.conf and seeing this text, you have followed the symlink.
+#
+# This is a dynamic resolv.conf file for connecting local clients to the
+# internal DNS stub resolver of systemd-resolved. This file lists all
+# configured search domains.
+#
+# Run "resolvectl status" to see details about the uplink DNS servers
+# currently in use.
+#
+# Third party programs should typically not access this file directly, but only
+# through the symlink at /etc/resolv.conf. To manage man:resolv.conf(5) in a
+# different way, replace this symlink by a static file or a different symlink.
+#
+# See man:systemd-resolved.service(8) for details about the supported modes of
+# operation for /etc/resolv.conf.
+
+nameserver 127.0.0.53
+options edns0 trust-ad
+search us-east-2.compute.internal
+
+
+root@adl-staging01:~# cat /etc/resolv.conf
+# This is /run/systemd/resolve/stub-resolv.conf managed by man:systemd-resolved(8).
+# Do not edit.
+#
+# This file might be symlinked as /etc/resolv.conf. If you're looking at
+# /etc/resolv.conf and seeing this text, you have followed the symlink.
+#
+# This is a dynamic resolv.conf file for connecting local clients to the
+# internal DNS stub resolver of systemd-resolved. This file lists all
+# configured search domains.
+#
+# Run "resolvectl status" to see details about the uplink DNS servers
+# currently in use.
+#
+# Third party programs should typically not access this file directly, but only
+# through the symlink at /etc/resolv.conf. To manage man:resolv.conf(5) in a
+# different way, replace this symlink by a static file or a different symlink.
+#
+# See man:systemd-resolved.service(8) for details about the supported modes of
+# operation for /etc/resolv.conf.
+
+nameserver 127.0.0.53
+options edns0 trust-ad
+search .
