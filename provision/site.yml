@@ -48,6 +48,26 @@
       loop_control:
         label: "{{ item.path }}"
 
+    - name: Create shared data group
+      group:
+        name: adventist-data
+        state: present
+
+    - name: Add SSH users to shared group
+      user:
+        name: "{{ item.name }}"
+        groups: adventist-data
+        append: yes
+      loop: "{{ ssh_users }}"
+
+    - name: Set permissions on mounted storage directories
+      file:
+        path: "{{ item.path }}"
+        owner: root
+        group: adventist-data
+        mode: '2775'      # setgid + rwxrwsr-x
+      loop: "{{ environments[env].mounts }}"
+
     - name: Update apt cache
       apt:
 

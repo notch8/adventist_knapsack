@@ -91,6 +91,7 @@ services:
       service: fits
 
   db:
+    image: postgres:14
     extends:
       file: hyrax-webapp/docker-compose.yml
       service: db

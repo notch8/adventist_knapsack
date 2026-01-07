@@ -3,6 +3,8 @@ x-app: &app
   image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
   env_file:
     - .env.production
+  environment:
+    - MAGICK_CONFIGURE_PATH=/etc/ImageMagick-7
   volumes:
     - .:/app/samvera
     - /store/keep/derivatives:/app/samvera/derivatives
@@ -11,12 +13,12 @@ x-app: &app
     - /store/keep/imports:/app/samvera/hyrax-webapp/tmp/imports/
     - /store/tmp/network-files:/app/samvera/hyrax-webapp/tmp/network-files/
     - /store/tmp/public-assets:/app/samvera/hyrax-webapp/public/assets
-    # /store/tmp/public-uv:/app/samvera/hyrax-webapp/public/uv
+      #- /store/tmp/public-uv:/app/samvera/hyrax-webapp/public/uv
     - /store/tmp/uploads:/app/samvera/uploads
     - /store/tmp/uploads:/app/samvera/hyrax-webapp/tmp/uploads
     - /store/keep/public-system:/app/samvera/hyrax-webapp/public/system
     - /store/keep/public-uploads:/app/samvera/hyrax-webapp/public/uploads
-    - /store/tmp/fast-tmp:/app/samvera/hyrax-webapp/tmp/fast-tmp
+    - /store/tmp/ruby-tmp-dir:/tmp
     - /cache:/app/samvera/hyrax-webapp/tmp/cache
   networks:
     internal:
@@ -25,12 +27,37 @@ x-app: &app
     options:
       max-size: "3g"
 
+x-app-worker: &app-worker
+    <<: *app
+    environment:
+      - HYRAX_FLEXIBLE=false
+      - MAGICK_CONFIGURE_PATH=/etc/ImageMagick-7
+    image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
+    # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
+    # command: sleep infinity
+    depends_on:
+      check_volumes:
+        condition: service_completed_successfully
+      initialize_app:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      solr:
+        condition: service_started
+      fcrepo:
+        condition: service_started
+      redis:
+        condition: service_started
+      zoo:
+        condition: service_started
+    restart: unless-stopped
+
 networks:
   internal:
 
 services:
   fits:
-    image: harvardlts/fitsservlet_container:1.5.0
+    image: ghcr.io/samvera/fitsservlet:1.6.0
     ports:
       - 9090:8080
     networks:
@@ -107,20 +134,26 @@ services:
     restart: unless-stopped
 
   fcrepo:
-    image: ghcr.io/samvera/fcrepo4:4.7.5
+    image: ghcr.io/notch8/docker-fcrepo:4.7.6-s3-streaming
     volumes:
       - /store/keep/fcrepo_data:/data:cached
+      - /store/keep/fcrepo_data/jetty-tmp:/var/lib/jetty/tmp
+      - /store/keep/fcrepo_data/jetty-work:/var/lib/jetty/work
+      - /store/keep/fcrepo_data/jetty-webapps-tmp:/var/lib/jetty/webapps/tmp
     env_file:
       - .env.production
     environment:
-      - JAVA_OPTS=${JAVA_OPTS} -Dfcrepo.modeshape.configuration="classpath:/config/jdbc-postgresql/repository.json" -Dfcrepo.postgresql.host=db -Dfcrepo.postgresql.username=${DB_USER} -Dfcrepo.postgresql.password=${DB_PASSWORD:-hyku} -Dfcrepo.object.directory="/data/objects" -Dfcrepo.binary.directory="/data/fcrepo.binary.directory" -Djava.io.tmpdir="/data/tmp"
+      - TMPDIR=/data/tmp
+      - JAVA_OPTIONS=-Daws.bucket=samvera-fcrepo -Daws.accessKeyId=${FCREPO_AWS_KEY} -Daws.secretKey=${FCREPO_AWS_SECRET} -Dfcrepo.postgresql.host=db -Dfcrepo.postgresql.username=fcrepo -Dfcrepo.postgresql.password=${FCREPO_DB_PASSWORD} -Dfcrepo.object.directory=/data/objects  -Djava.io.tmpdir=/data/tmp -XX:ConcGCThreads=4 -XX:MaxGCPauseMillis=200 -XX:ParallelGCThreads=20 -XX:+UseG1GC -XX:+UseCompressedOops -XX:-UseLargePagesIndividualAllocation -XX:MaxPermSize=512M -Xms16g -Xmx16g
+      - MODESHAPE_CONFIG=classpath:/config/jdbc-postgresql-s3/repository.json
+      - FCREPO_DB_PASSWORD=${FCREPO_DB_PASSWORD}
     expose:
       - 8080
     networks:
       internal:
 
   db:
-    image: postgres:11.1
+    image: postgres:14
     env_file:
       - .env.production
     environment:
@@ -128,7 +161,8 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_USER=${DB_USER}
     volumes:
-      - /store/keep/db_data:/var/lib/postgresql/data
+      - /store/keep/db_data/pg14:/var/lib/postgresql/data
+      - /store/keep/db_data/dumps:/dumps:ro
     networks:
       internal:
 
@@ -158,24 +192,19 @@ services:
     restart: unless-stopped
 
   worker:
-    <<: *app
-    image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
-    depends_on:
-      check_volumes:
-        condition: service_completed_successfully
-      initialize_app:
-        condition: service_completed_successfully
-      db:
-        condition: service_started
-      solr:
-        condition: service_started
-      fcrepo:
-        condition: service_started
-      redis:
-        condition: service_started
-      zoo:
-        condition: service_started
-    restart: unless-stopped
+    <<: *app-worker
+
+  worker_aux:
+    <<: *app-worker
+    environment:
+      - AUX_WORKER="true"
+      - AUXILIARY_QUEUE_TENANTS="sdapi"
+      - AWS_S3_BUCKET=space-stone-production-preprocessedbucketf21466dd-15sun4xy658nh
+      - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
+      - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400
+      - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
+      - HYRAX_ACTIVE_JOB_QUEUE=good_job
+      - MAGICK_CONFIGURE_PATH=/etc/ImageMagick-7
 
   # Do not recurse through all of tmp. derivatives will make booting
   # very slow and eventually just time out as data grows
@@ -188,6 +217,7 @@ services:
         chown -R app:app /app/samvera/hyrax-webapp/public/uploads &&
         chown -R app:app /app/samvera/hyrax-webapp/public/assets &&
         chown -R app:app /app/samvera/hyrax-webapp/tmp/cache
+
   initialize_app:
     <<: *app
     environment:
