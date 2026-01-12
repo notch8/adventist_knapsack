@@ -8,6 +8,3 @@
 
 # NOTE: these injected gems are very sticky... it appears that you must rebuild
 # your docker container and rebundle to get rid of an injected gem.
-
-ensure_gem 'derivative-rodeo', '~> 0.5', '>= 0.5.3'
-ensure_gem 'valkyrie-shrine', branch: 'main', git: 'https://github.com/samvera-labs/valkyrie-shrine.git'

@@ -1,0 +1,64 @@
+---
+# existing global variables
+root_group: root
+ssh_users:
+  - name: april
+    github: aprilrieger
+  - name: max
+    github: maxkadel
+ghcr_token: "{{ lookup('file', 'files/ghcr_token') | trim }}"
+ansible_become_password: "{{ lookup('file', 'files/ansible_become_password') | trim }}"
+git_repo_url: "https://orangewolf:{{ ghcr_token | urlencode }}@github.com/notch8/adventist_knapsack.git"
+
+environments:
+  staging:
+    hyku_admin_host: s3.adventistdigitallibrary.org
+    hostnames:
+      - s3.adventistdigitallibrary.org
+      - '*.s3.adventistdigitallibrary.org'
+    web_root: /store/keep/adventist_knapsack/public
+    ssl_cert_dest: /etc/letsencrypt/archive/s3.adventistdigitallibrary.org/fullchain1.pem
+    ssl_key_dest: /etc/letsencrypt/archive/s3.adventistdigitallibrary.org/privkey1.pem
+    upstream_app_host: 192.168.147.200
+    upstream_app_port: 3000
+    # To get the UUID for each volume on the server run: lsblk -o NAME,UUID,MOUNTPOINT,FSTYPE
+    mounts:
+    - { path: "/store/keep",                 uuid: "89e4213c-6100-4a72-8d52-2a21dfaedf1a", fstype: "xfs" }
+    - { path: "/store/tmp",                  uuid: "dc3dc4e8-b2d1-4e22-a741-7288dc1b893e", fstype: "xfs" }
+    - { path: "/var/lib/docker",             uuid: "3083181c-ffdd-4dce-9894-6f36237fc255", fstype: "xfs" }
+    - { path: "/store/keep/db_data",         uuid: "7ca298c8-f8f3-4976-ae78-3147ed33c819", fstype: "xfs" }
+    - { path: "/store/keep/fcrepo_data",     uuid: "f528b510-5da5-4668-8d05-2a798f3cd29c", fstype: "xfs" }
+    - { path: "/store/keep/redis_data",      uuid: "a4d4c2c5-b518-4c52-985a-71d3f3f1bd7a", fstype: "xfs" }
+    - { path: "/store/keep/solr-data",       uuid: "8b03667d-d6c8-4654-92ac-047bf2c12063", fstype: "xfs" }
+    - { path: "/store/keep/zoo_data",        uuid: "b1c16f24-6b47-4735-b085-106083f5fbe7", fstype: "xfs" }
+
+  production:
+    hyku_admin_host: b3.adventistdigitallibrary.org
+    hostnames:
+      - b3.adventistdigitallibrary.org
+      - '*.b3.adventistdigitallibrary.org'
+    web_root: /store/keep/adventist_knapsack/public
+    ssl_cert_dest: /etc/letsencrypt/archive/b3.adventistdigitallibrary.org/fullchain1.pem
+    ssl_key_dest: /etc/letsencrypt/archive/b3.adventistdigitallibrary.org/privkey1.pem
+    upstream_app_host: 192.168.147.100
+    upstream_app_port: 3000
+    # To get the UUID for each volume on the server run: lsblk -o NAME,UUID,MOUNTPOINT,FSTYPE
+    mounts:
+    - { path: "/store/keep",                 uuid: "79a6a2d2-2ae4-4bd6-b227-6ae03bb5fbf3", fstype: "xfs" }
+    - { path: "/store/tmp",                  uuid: "c1a9605c-e81a-4478-8f1a-420fafc73d64", fstype: "xfs" }
+    - { path: "/var/lib/docker",             uuid: "c96601c8-1fff-4540-ac35-e8f0257c5fb0", fstype: "xfs" }
+    - { path: "/store/keep/db_data",         uuid: "0fed6c6e-865d-4b9e-80a8-20c39e23aba5", fstype: "xfs" }
+    - { path: "/store/keep/fcrepo_data",     uuid: "274f387c-4578-49fa-bba9-f7802488d561", fstype: "xfs" }
+    - { path: "/store/keep/redis_data",      uuid: "70ddbea4-2703-4a92-aa22-db2582c191d2", fstype: "xfs" }
+    - { path: "/store/keep/solr-data",       uuid: "90a5a23f-1909-4bbe-9507-95abf0d32980", fstype: "xfs" }
+    - { path: "/store/keep/zoo_data",        uuid: "f48d11f1-25da-4433-8507-460a3c588ddf", fstype: "xfs" }
+
+# convenience variables
+server_name: "{{ environments[env].hostnames | join(' ') }}"
+web_root: "{{ environments[env].web_root }}"
+ssl_certificate: "{{ environments[env].ssl_cert_dest }}"
+ssl_certificate_key: "{{ environments[env].ssl_key_dest }}"
+upstream_app_host: "{{ environments[env].upstream_app_host }}"
+upstream_app_port: "{{ environments[env].upstream_app_port }}"
+ssl_certificate_src: "{{ environments[env].ssl_cert_src }}"
+ssl_key_src: "{{ environments[env].ssl_key_src }}"

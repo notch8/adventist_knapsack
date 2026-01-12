@@ -1,0 +1,44 @@
+---
+- name: Ensure storage directories exist
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ environments[env].mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Mount volumes and persist (UUID-based)
+  ansible.posix.mount:
+    path: "{{ item.path }}"
+    src: "UUID={{ item.uuid }}"
+    fstype: "{{ item.fstype | default('xfs') }}"
+    opts: "{{ item.opts  | default('defaults,noatime') }}"
+    state: mounted
+  loop: "{{ environments[env].mounts }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install required packages
+  apt:
+    name:
+      - docker.io
+      - nginx
+      - python3-dotenv-cli
+    state: present
+
+- name: Install Docker Compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/latest/download/docker-compose-{{ ansible_system }}-{{ ansible_architecture }}"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Add adlquantum6269 user to docker group
+  user:
+    name: adlquantum6269
+    groups: docker
+    append: yes

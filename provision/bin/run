@@ -1,0 +1,58 @@
+#!/bin/bash
+# =============================================================================
+# Adventist Knapsack Deployment Script
+# Handles staging and production environments.
+# Fetches secrets from 1Password, sets up env, runs Ansible, and optionally starts Docker.
+# =============================================================================
+set -euo pipefail
+
+# -------------------------------
+# 0. 1Password Setup Instructions
+# -------------------------------
+# If secrets have not been uploaded to 1Password yet, run these commands once:
+#
+#   op document create files/id_rsa                   --title DEPLOY_ID_RSA                 --vault "ADVENTIST"
+#   op document create files/ghcr_token               --title GHCR_TOKEN                    --vault "ADVENTIST"
+#   op document create files/ansible_become_password  --title ANSIBLE_BECOME_PASSWORD       --vault "ADVENTIST"
+#   op document create files/cloudflare.ini           --title CLOUDFLARE_INI                --vault "ADVENTIST"
+#
+# Make sure you are logged in via: `eval $(op signin)`
+
+# -------------------------------
+# 1. Determine environment
+# -------------------------------
+ENV=${1:-staging}   # Default to staging if no argument
+echo "Deploying environment: $ENV"
+
+# -------------------------------
+# 2. Ensure secrets exist locally (fetch from 1Password if missing)
+# -------------------------------
+mkdir -p files
+
+if [ ! -f files/id_rsa ]; then
+  echo "Fetching deploy key..."
+  op document get DEPLOY_ID_RSA --out-file files/id_rsa
+fi
+
+if [ ! -f files/ghcr_token ]; then
+  echo "Fetching GHCR token..."
+  op document get GHCR_TOKEN --out-file files/ghcr_token
+fi
+
+if [ ! -f files/ansible_become_password ]; then
+  echo "Fetching Ansible become password..."
+  op document get ANSIBLE_BECOME_PASSWORD --out-file files/ansible_become_password
+fi
+
+if [ ! -f files/cloudflare.ini ]; then
+  echo "Fetching Cloudflare credentials..."
+  op document get CLOUDFLARE_INI --out-file files/cloudflare.ini
+fi
+
+# -------------------------------
+# 3. Run Ansible playbook
+# -------------------------------
+echo "Running Ansible playbook for $ENV..."
+ansible-playbook -i inventory.yml site.yml -e "env=${ENV}" --limit "${ENV}"
+
+echo "Deployment for $ENV completed successfully!"
