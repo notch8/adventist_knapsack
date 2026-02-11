@@ -12,13 +12,13 @@ git_repo_url: "https://orangewolf:{{ ghcr_token | urlencode }}@github.com/notch8
 
 environments:
   staging:
-    hyku_admin_host: s3.adventistdigitallibrary.org
+    hyku_admin_host: s2.adventistdigitallibrary.org
     hostnames:
-      - s3.adventistdigitallibrary.org
-      - '*.s3.adventistdigitallibrary.org'
+      - s2.adventistdigitallibrary.org
+      - '*.s2.adventistdigitallibrary.org'
     web_root: /store/keep/adventist_knapsack/public
-    ssl_cert_dest: /etc/letsencrypt/archive/s3.adventistdigitallibrary.org/fullchain1.pem
-    ssl_key_dest: /etc/letsencrypt/archive/s3.adventistdigitallibrary.org/privkey1.pem
+    ssl_cert_dest: /etc/letsencrypt/archive/s2.adventistdigitallibrary.org/fullchain1.pem
+    ssl_key_dest: /etc/letsencrypt/archive/s2.adventistdigitallibrary.org/privkey1.pem
     upstream_app_host: 192.168.147.200
     upstream_app_port: 3000
     # To get the UUID for each volume on the server run: lsblk -o NAME,UUID,MOUNTPOINT,FSTYPE
@@ -33,13 +33,13 @@ environments:
     - { path: "/store/keep/zoo_data",        uuid: "b1c16f24-6b47-4735-b085-106083f5fbe7", fstype: "xfs" }
 
   production:
-    hyku_admin_host: b3.adventistdigitallibrary.org
+    hyku_admin_host: b2.adventistdigitallibrary.org
     hostnames:
-      - b3.adventistdigitallibrary.org
-      - '*.b3.adventistdigitallibrary.org'
+      - b2.adventistdigitallibrary.org
+      - '*.b2.adventistdigitallibrary.org'
     web_root: /store/keep/adventist_knapsack/public
-    ssl_cert_dest: /etc/letsencrypt/archive/b3.adventistdigitallibrary.org/fullchain1.pem
-    ssl_key_dest: /etc/letsencrypt/archive/b3.adventistdigitallibrary.org/privkey1.pem
+    ssl_cert_dest: /etc/letsencrypt/archive/b2.adventistdigitallibrary.org/fullchain1.pem
+    ssl_key_dest: /etc/letsencrypt/archive/b2.adventistdigitallibrary.org/privkey1.pem
     upstream_app_host: 192.168.147.100
     upstream_app_port: 3000
     # To get the UUID for each volume on the server run: lsblk -o NAME,UUID,MOUNTPOINT,FSTYPE
