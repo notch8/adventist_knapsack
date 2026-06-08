@@ -27,8 +27,6 @@ jobs:
     secrets: inherit
     with:
       components: '["web","worker","solr"]'
-      webTarget: hyku-web
-      workerTarget: hyku-worker
 
   test:
     needs: build
