@@ -17,8 +17,8 @@ environments:
       - s2.adventistdigitallibrary.org
       - '*.s2.adventistdigitallibrary.org'
     web_root: /store/keep/adventist_knapsack/public
-    ssl_cert_dest: /etc/letsencrypt/archive/s2.adventistdigitallibrary.org/fullchain1.pem
-    ssl_key_dest: /etc/letsencrypt/archive/s2.adventistdigitallibrary.org/privkey1.pem
+    ssl_cert_dest: /etc/letsencrypt/live/s2.adventistdigitallibrary.org/fullchain.pem
+    ssl_key_dest: /etc/letsencrypt/live/s2.adventistdigitallibrary.org/privkey.pem
     upstream_app_host: 192.168.147.200
     upstream_app_port: 3000
     # To get the UUID for each volume on the server run: lsblk -o NAME,UUID,MOUNTPOINT,FSTYPE
@@ -38,8 +38,8 @@ environments:
       - b2.adventistdigitallibrary.org
       - '*.b2.adventistdigitallibrary.org'
     web_root: /store/keep/adventist_knapsack/public
-    ssl_cert_dest: /etc/letsencrypt/archive/b2.adventistdigitallibrary.org/fullchain1.pem
-    ssl_key_dest: /etc/letsencrypt/archive/b2.adventistdigitallibrary.org/privkey1.pem
+    ssl_cert_dest: /etc/letsencrypt/live/b2.adventistdigitallibrary.org/fullchain.pem
+    ssl_key_dest: /etc/letsencrypt/live/b2.adventistdigitallibrary.org/privkey.pem
     upstream_app_host: 192.168.147.100
     upstream_app_port: 3000
     # To get the UUID for each volume on the server run: lsblk -o NAME,UUID,MOUNTPOINT,FSTYPE

@@ -111,6 +111,7 @@
       command: >
         certbot certonly --dns-cloudflare
         --dns-cloudflare-credentials /root/.secrets/certbot/cloudflare.ini
+        --dns-cloudflare-propagation-seconds 90
         --non-interactive --agree-tos
         -m admin@adventistdigitallibrary.org
         -d {{ environments[env].hostnames | join(' -d ') }}
