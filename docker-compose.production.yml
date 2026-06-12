@@ -1,6 +1,6 @@
 x-app: &app
   user: root
-  image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
+  image: ghcr.io/notch8/adventist_knapsack/web:${TAG:-latest}
   env_file:
     - .env.production
   environment:
