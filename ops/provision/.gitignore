@@ -1,4 +1,0 @@
-kube_config.yml
-k8s/*-values.yaml
-.backend
-.terraform*
