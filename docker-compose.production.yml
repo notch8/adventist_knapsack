@@ -5,6 +5,8 @@ x-app: &app
     - .env.production
   environment:
     - MAGICK_CONFIGURE_PATH=/etc/ImageMagick-7
+    - HYKU_ATTACK_RATE_THROTTLE_OFF=false
+    - HYKU_ATTACK_RATE_LIMIT=10
   volumes:
     - .:/app/samvera
     - /store/keep/derivatives:/app/samvera/derivatives
@@ -190,6 +192,12 @@ services:
     ports:
       - 3000:3000
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   worker:
     <<: *app-worker
