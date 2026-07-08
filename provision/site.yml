@@ -52,6 +52,7 @@
       group:
         name: adventist-data
         state: present
+      tags: [storage-perms]
 
     - name: Add SSH users to shared group
       user:
@@ -59,6 +60,7 @@
         groups: adventist-data
         append: yes
       loop: "{{ ssh_users }}"
+      tags: [storage-perms]
 
     - name: Set permissions on mounted storage directories
       file:
@@ -146,9 +148,28 @@
       file:
         path: /store/keep/adventist_knapsack
         state: directory
-        mode: '0755'
+        # setgid (leading 2) so files created here inherit the adventist-data
+        # group - matches production's actual (previously hand-set, untracked)
+        # permissions; staging was still plain root:root 0755 before this.
+        mode: '2775'
         owner: root
-        group: root
+        group: adventist-data
+      tags: [storage-perms]
+
+    - name: Allow git to operate here regardless of file ownership (system-wide, all users)
+      # Without this, git refuses to run at all ("dubious ownership") for any
+      # user other than the file owner - the directory is root:adventist-data,
+      # not owned by whoever's SSH'd in to run bin/deploy. System scope (not
+      # per-user) so this covers every current and future ssh_user in one
+      # task, matching the Dockerfile's own equivalent for the container side
+      # (`git config --system --add safe.directory *`).
+      ansible.builtin.shell: |
+        git config --system --get-all safe.directory | grep -qx '{{ item }}' || git config --system --add safe.directory '{{ item }}'
+      loop:
+        - /store/keep/adventist_knapsack
+        - /store/keep/adventist_knapsack/hyrax-webapp
+      changed_when: false
+      tags: [git-safe-directory]
 
     - name: Check if git repository already exists
       stat:

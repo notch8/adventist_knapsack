@@ -236,9 +236,12 @@ Let's Encrypt is seeing an old `_acme-challenge` TXT record that doesn't match t
 
 ## Post-Installation
 
-For working with Docker Compose, use:
+Application deploys (as opposed to this host provisioning) are handled by
+`bin/deploy` at the repo root - see [ops/DEPLOY.md](../ops/DEPLOY.md). For a
+one-off manual Docker Compose command against a specific environment:
 ```bash
-alias dc='dotenv -e .env.production docker compose -f docker-compose.production.yml'
+alias dc='dotenv -o -f .env.production,.env.common docker compose -f docker-compose.production.yml'
+# (swap .env.production / docker-compose.production.yml for .env.staging / docker-compose.staging.yml on staging)
 ```
 
 ## File Structure

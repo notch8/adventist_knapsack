@@ -7,6 +7,7 @@
 scratch.md
 *~undo-tree~
 .env.*
+!.env.common
 .DS_Store
 
 /coverage

@@ -16,6 +16,9 @@ set -euo pipefail
 #   op document create files/ansible_become_password  --title ANSIBLE_BECOME_PASSWORD       --vault "ADVENTIST"
 #   op document create files/cloudflare.ini           --title CLOUDFLARE_INI                --vault "ADVENTIST"
 #
+# The app's .env.staging / .env.production secrets live in the same vault -
+# see provision/bin/fetch-secrets for uploading/pulling those.
+#
 # Make sure you are logged in via: `eval $(op signin)`
 
 # -------------------------------
