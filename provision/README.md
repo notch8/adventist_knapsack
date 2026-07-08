@@ -45,7 +45,32 @@ The playbook will:
 
 ## Post-Installation
 
-For working with Docker Compose, use:
+Application deploys (as opposed to this host provisioning) are handled by
+`bin/deploy` at the repo root - see [ops/DEPLOY.md](../ops/DEPLOY.md). For a
+one-off manual Docker Compose command against a specific environment:
 ```bash
-alias dc='dotenv -e .env.production docker-compose -f docker-compose.production.yml'
+alias dc='dotenv -o -f .env.production,.env.common docker compose -f docker-compose.production.yml'
+# (swap .env.production / docker-compose.production.yml for .env.staging / docker-compose.staging.yml on staging)
+```
+
+## File Structure
+
+```
+provision/
+├── bin/
+│   └── run                    # Main deployment script
+├── files/
+│   ├── ansible_become_password # sudo password (gitignored content)
+│   ├── cloudflare.ini          # Cloudflare API credentials (gitignored content)
+│   ├── ghcr_token              # GitHub Container Registry token
+│   ├── id_rsa                  # SSH deploy key (gitignored)
+│   ├── id_rsa.pub              # SSH public key
+│   └── nginx-default.j2        # Nginx config template
+├── roles/
+│   └── base_setup/             # Base system setup role
+├── vars/
+│   └── main.yml                # Environment-specific variables
+├── inventory.yml               # Server inventory
+├── requirements.yml            # Ansible role dependencies
+└── site.yml                    # Main playbook
 ```

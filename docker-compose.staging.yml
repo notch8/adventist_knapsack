@@ -1,25 +1,28 @@
 x-app: &app
   user: root
-  image: ghcr.io/notch8/adventist_knapsack:${TAG:-latest}
+  image: ghcr.io/notch8/adventist_knapsack/web:${TAG:-latest}
   env_file:
     - .env.common
-    - .env.production
+    - .env.staging
   environment:
     - MAGICK_CONFIGURE_PATH=/etc/ImageMagick-7
+    - HYKU_ATTACK_RATE_THROTTLE_OFF=false
+    - HYKU_ATTACK_RATE_LIMIT=10
   volumes:
     - .:/app/samvera
     - /store/keep/derivatives:/app/samvera/derivatives
     - /store/keep/branding:/app/samvera/branding
     - /store/keep/exports:/app/samvera/hyrax-webapp/tmp/exports/
     - /store/keep/imports:/app/samvera/hyrax-webapp/tmp/imports/
-    - /store/tmp/network-files:/app/samvera/hyrax-webapp/tmp/network-files/
-    - /store/tmp/public-assets:/app/samvera/hyrax-webapp/public/assets
-      #- /store/tmp/public-uv:/app/samvera/hyrax-webapp/public/uv
-    - /store/tmp/uploads:/app/samvera/uploads
-    - /store/tmp/uploads:/app/samvera/hyrax-webapp/tmp/uploads
+    # staging has no dedicated /store/tmp mount (single /store/keep volume only -
+    # see ops/DEPLOY.md), so these live under /store/keep/tmp instead of /store/tmp.
+    - /store/keep/tmp/network-files:/app/samvera/hyrax-webapp/tmp/network-files/
+    - /store/keep/tmp/public-assets:/app/samvera/hyrax-webapp/public/assets
+    - /store/keep/tmp/uploads:/app/samvera/uploads
+    - /store/keep/tmp/uploads:/app/samvera/hyrax-webapp/tmp/uploads
     - /store/keep/public-system:/app/samvera/hyrax-webapp/public/system
     - /store/keep/public-uploads:/app/samvera/hyrax-webapp/public/uploads
-    - /store/tmp/ruby-tmp-dir:/tmp
+    - /store/keep/tmp/ruby-tmp-dir:/tmp
     - /cache:/app/samvera/hyrax-webapp/tmp/cache
   networks:
     internal:
@@ -34,8 +37,6 @@ x-app-worker: &app-worker
       - HYRAX_FLEXIBLE=false
       - MAGICK_CONFIGURE_PATH=/etc/ImageMagick-7
     image: ghcr.io/notch8/adventist_knapsack/worker:${TAG:-latest}
-    # Uncomment command to access container with out starting bin/worker. Useful for debugging or updating Gemfile.lock
-    # command: sleep infinity
     depends_on:
       check_volumes:
         condition: service_completed_successfully
@@ -99,7 +100,7 @@ services:
     image: ghcr.io/samvera/hyku/solr:latest
     env_file:
       - .env.common
-      - .env.production
+      - .env.staging
     environment:
       - OOM=script
       - SOLR_ADMIN_USER=${SOLR_ADMIN_USER}
@@ -144,9 +145,11 @@ services:
       - /store/keep/fcrepo_data/jetty-webapps-tmp:/var/lib/jetty/webapps/tmp
     env_file:
       - .env.common
-      - .env.production
+      - .env.staging
     environment:
       - TMPDIR=/data/tmp
+      # FCREPO_S3_BUCKET must be a staging-only bucket (see .env.staging TODO) -
+      # never point this at production's "samvera-fcrepo" bucket.
       - JAVA_OPTIONS=-Daws.bucket=${FCREPO_S3_BUCKET} -Daws.accessKeyId=${FCREPO_AWS_KEY} -Daws.secretKey=${FCREPO_AWS_SECRET} -Dfcrepo.postgresql.host=db -Dfcrepo.postgresql.username=fcrepo -Dfcrepo.postgresql.password=${FCREPO_DB_PASSWORD} -Dfcrepo.object.directory=/data/objects  -Djava.io.tmpdir=/data/tmp -XX:ConcGCThreads=4 -XX:MaxGCPauseMillis=200 -XX:ParallelGCThreads=20 -XX:+UseG1GC -XX:+UseCompressedOops -XX:-UseLargePagesIndividualAllocation -XX:MaxPermSize=512M -Xms16g -Xmx16g
       - MODESHAPE_CONFIG=classpath:/config/jdbc-postgresql-s3/repository.json
       - FCREPO_DB_PASSWORD=${FCREPO_DB_PASSWORD}
@@ -159,7 +162,7 @@ services:
     image: postgres:14
     env_file:
       - .env.common
-      - .env.production
+      - .env.staging
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -194,6 +197,12 @@ services:
     ports:
       - 3000:3000
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   worker:
     <<: *app-worker
@@ -203,6 +212,8 @@ services:
     environment:
       - AUX_WORKER="true"
       - AUXILIARY_QUEUE_TENANTS="sdapi"
+      # AWS_S3_BUCKET intentionally NOT hardcoded here - comes from env_file
+      # (.env.staging), which must be a staging-only bucket, never prod's.
       - GOOD_JOB_CLEANUP_DISCARDED_JOBS=false
       - GOOD_JOB_CLEANUP_INTERVAL_SECONDS=86400
       - GOOD_JOB_CLEANUP_PRESERVED_JOBS_BEFORE_SECONDS_AGO=604800
@@ -247,7 +258,7 @@ services:
     image: redis:5
     env_file:
       - .env.common
-      - .env.production
+      - .env.staging
     command: sh -c 'redis-server --requirepass "$REDIS_PASSWORD"'
     volumes:
       - /store/keep/redis_data:/data

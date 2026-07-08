@@ -30,6 +30,22 @@ include making contributing back to the Hyku project easier and making upgrades 
 
 [Hyku](https://github.com/samvera/hyku) is a Rails application that leverages Rails Engines and other gems to provide functionality.  A Hyku Knapsack is also a Rails engine, but it integrates differently than other engines.
 
+## Deploy updates to code
+* To get onto the staging and production servers, follow the [instructions in the playbook](https://github.com/notch8/playbook/blob/main/maint-clients/adventist.md).
+* Application code is in `/store/keep/adventist_knapsack`
+* See [ops/DEPLOY.md](ops/DEPLOY.md) for the full deploy runbook, including one-time secrets setup in 1Password.
+
+Staging and production both run `bin/deploy <environment> [git_ref] [image_tag]`
+from that directory - same script, same `docker-compose.<environment>.yml`
+topology, different `.env.<environment>` secrets (layered on top of the shared,
+committed `.env.common`). This replaced an earlier setup where staging ran a
+different, dev-oriented compose file than production, so a successful staging
+deploy is now actually predictive of a production one.
+
+`.env.production` and `.env.staging` are gitignored and sourced from the
+`ADVENTIST` 1Password vault (`provision/bin/fetch-secrets`) rather than living
+only on one machine or as hand-edits on a box.
+
 ### Precedence
 
 In a traditional setup, a Rails' application's views, translations, and code supsedes all other gems and engines.  However, we have setup Hyku Knapsack to have a higher load precedence than the underlying Hyku application.
