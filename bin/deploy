@@ -74,6 +74,18 @@ else
 fi
 git submodule update --init --recursive
 
+# bin/deploy just possibly rewrote itself (self-modifying script - checked out
+# above along with everything else). This running process may have already
+# buffered/executed past this point using the OLD script content even though
+# the file on disk is now current (observed directly: a git pull that updated
+# bin/deploy still ran the old dotenv invocation afterward in the same
+# process). Re-exec fresh so everything from here on reads the actual current
+# file, not whatever this invocation started with.
+if [[ -z "${BIN_DEPLOY_REEXECED:-}" ]]; then
+  export BIN_DEPLOY_REEXECED=1
+  exec "$0" "$ENVIRONMENT" "$REF" "$TAG"
+fi
+
 # Load both env files into THIS shell's environment so docker-compose's own
 # ${VAR} interpolation (SOLR_ADMIN_PASSWORD, DB_NAME, FCREPO_S3_BUCKET, etc.)
 # resolves correctly - .env.staging/.env.production last, so it wins on any
