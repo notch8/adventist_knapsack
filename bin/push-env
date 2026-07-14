@@ -1,0 +1,87 @@
+#!/bin/bash
+# Run this ON YOUR LAPTOP, not on the server - the server has no 1Password
+# access. Fetches .env.<environment> from 1Password (if `op` is available and
+# signed in) and copies it, plus .env.common, onto the target server so
+# bin/deploy can find them there. See ops/DEPLOY.md.
+#
+# Uses YOUR OWN personal SSH access (default identity/agent, no shared key) -
+# confirmed working 2026-07-07 for direct VPN access to both adl-staging01 and
+# adl-prod01, sudo + docker group on both, and (as of the storage-perms fix)
+# write access to /store/keep/adventist_knapsack via the adventist-data group
+# on both. Needs your local username to match your server username (the
+# convention set up in provision/vars/main.yml's ssh_users) and VPN connected.
+#
+# The shared adlquantum6269 + DEPLOY_ID_RSA account still exists and still
+# works, but this script no longer uses it - one less shared credential in
+# the loop. See ops/DEPLOY.md for the jump-box fallback if direct access ever
+# stops working for you.
+#
+# Usage: bin/push-env <staging|production>
+set -euo pipefail
+
+ENVIRONMENT="${1:-}"
+case "$ENVIRONMENT" in
+  staging) HOST=192.168.147.200; JUMP_ALIAS=adventist-staging ;;
+  production) HOST=192.168.147.100; JUMP_ALIAS=adventist-prod ;;
+  *)
+    echo "Usage: bin/push-env <staging|production>" >&2
+    exit 1
+    ;;
+esac
+
+cd "$(dirname "$0")/.."
+
+REMOTE_USER="${REMOTE_USER:-$(whoami)}"
+REMOTE_DIR=/store/keep/adventist_knapsack
+
+if command -v op >/dev/null 2>&1; then
+  ./provision/bin/fetch-secrets "$ENVIRONMENT" || echo "fetch-secrets failed - pushing whatever .env.$ENVIRONMENT is already on disk locally" >&2
+else
+  echo "op CLI not found - pushing whatever .env.$ENVIRONMENT is already on disk locally" >&2
+fi
+
+if [[ ! -f ".env.common" || ! -f ".env.$ENVIRONMENT" ]]; then
+  echo "Missing .env.common and/or .env.$ENVIRONMENT locally - nothing to push." >&2
+  exit 1
+fi
+
+SSH_OPTS=(-o ConnectTimeout=8 -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
+
+echo "==> Backing up whatever's currently on $HOST before overwriting it..."
+# sudo (passwordless for ssh_users, per site.yml) because older files here may
+# be root-owned from before the personal-account switch - a plain `cp` as a
+# non-root user silently can't even read those. No `|| true` swallowing here -
+# a real backup failure should abort the push, not just look successful.
+BACKUP_CMD='cd '"$REMOTE_DIR"' && ts=$(date +%Y%m%d-%H%M%S); ok=0; for f in .env.common .env.'"$ENVIRONMENT"'; do if [ -f "$f" ]; then sudo cp "$f" "$f.bak-$ts" && echo "  backed up $f -> $f.bak-$ts" || ok=1; else echo "  $f does not exist yet, nothing to back up"; fi; done; exit $ok'
+if ! ssh "${SSH_OPTS[@]}" "$REMOTE_USER@$HOST" "$BACKUP_CMD"; then
+  cat <<EOF >&2
+Could not back up the current env files on $HOST as $REMOTE_USER - aborting
+before pushing anything (VPN not connected, username mismatch, sudo issue, or
+a real backup failure - see output above). See the fallback below.
+EOF
+  DIRECT_FAILED=1
+fi
+
+if [[ -z "${DIRECT_FAILED:-}" ]]; then
+  echo "==> Pushing to $HOST as $REMOTE_USER (personal account, default SSH identity)..."
+  if scp "${SSH_OPTS[@]}" .env.common ".env.$ENVIRONMENT" "$REMOTE_USER@$HOST:$REMOTE_DIR/"; then
+    echo "==> Pushed .env.common and .env.$ENVIRONMENT to $HOST (previous versions backed up alongside them, .bak-<timestamp>)."
+    exit 0
+  fi
+fi
+
+cat <<EOF >&2
+Direct access to $HOST as $REMOTE_USER failed (VPN not connected, your local
+username doesn't match your server username, your key isn't authorized there,
+or you don't yet have write access to $REMOTE_DIR - check
+your group membership includes adventist-data). Fall back to the jump-box
+path by hand (needs the 1Password SSH password, so it can't be scripted here
+without storing that password somewhere):
+
+  scp .env.common .env.$ENVIRONMENT ubuntu@21jumpbox:~/
+  ssh 21jumpbox
+  # from the jump box prompt, password from 1Password when asked:
+  scp ~/.env.common ~/.env.$ENVIRONMENT $JUMP_ALIAS:$REMOTE_DIR/
+  rm ~/.env.common ~/.env.$ENVIRONMENT   # don't leave secrets sitting on the jump box
+EOF
+exit 1

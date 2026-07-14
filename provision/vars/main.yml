@@ -2,8 +2,8 @@
 # existing global variables
 root_group: root
 ssh_users:
-  - name: april
-    github: aprilrieger
+  - name: rob
+    github: orangewolf
   - name: max
     github: maxkadel
 ghcr_token: "{{ lookup('file', 'files/ghcr_token') | trim }}"

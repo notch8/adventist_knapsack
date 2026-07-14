@@ -1,0 +1,123 @@
+#!/bin/bash
+# Single canonical deploy path for staging and production. Run this ON THE
+# SERVER (after SSHing in via VPN or the jump box - see ops/DEPLOY.md), not on
+# your laptop: this is where docker/git actually need to run. The server has
+# no 1Password access, so it does NOT fetch secrets itself - run
+# `bin/push-env <environment>` from your laptop first to get an up-to-date
+# .env.common/.env.<environment> onto the server, then SSH in and run this.
+#
+# Usage:
+#   bin/deploy <staging|production> [git_ref] [image_tag]
+#
+# git_ref   defaults to "main"    - branch or tag to check out before deploying
+# image_tag defaults to "latest" - value used for the compose ${TAG} interpolation
+#
+# Rollback example:
+#   bin/deploy production v1.0.0 v1.0.0
+set -euo pipefail
+
+ENVIRONMENT="${1:-}"
+REF="${2:-main}"
+export TAG="${3:-latest}"
+
+if [[ "$ENVIRONMENT" != "staging" && "$ENVIRONMENT" != "production" ]]; then
+  echo "Usage: bin/deploy <staging|production> [git_ref] [image_tag]" >&2
+  exit 1
+fi
+
+cd "$(dirname "$0")/.."
+REPO_ROOT="$(pwd)"
+COMPOSE_FILE="docker-compose.${ENVIRONMENT}.yml"
+ENV_FILE=".env.${ENVIRONMENT}"
+
+echo "==> Deploying $ENVIRONMENT (ref=$REF, image tag=$TAG) from $REPO_ROOT"
+
+if [[ ! -f ".env.common" || ! -f "$ENV_FILE" ]]; then
+  echo "Missing .env.common and/or $ENV_FILE on this server." >&2
+  echo "This box has no 1Password access - run this from your laptop first:" >&2
+  echo "  bin/push-env $ENVIRONMENT" >&2
+  exit 1
+fi
+
+echo "==> Updating code to $REF"
+
+# git safe.directory is handled by provision/site.yml (system-wide, all
+# users, one-time host setup) - not here, since it's a host-provisioning
+# concern, not a per-deploy one.
+
+# Defensively stash (not discard) any local drift before pulling. The server
+# checkout should be reproducible from git + the .env files, not a place to
+# accumulate hand-edits - but if one ever sneaks in (e.g. from bundle/rails
+# writing back to Gemfile.lock or db/schema.rb during a container run), stash
+# it instead of letting it silently block - or silently get lost under - the
+# next pull.
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "  local changes detected in $REPO_ROOT - stashing before pulling:"
+  git status --short
+  git stash push -u -m "bin/deploy auto-stash $(date +%Y%m%d-%H%M%S)"
+fi
+if ! git -C hyrax-webapp diff --quiet || ! git -C hyrax-webapp diff --cached --quiet; then
+  echo "  local changes detected in hyrax-webapp - stashing before pulling:"
+  git -C hyrax-webapp status --short
+  git -C hyrax-webapp stash push -u -m "bin/deploy auto-stash $(date +%Y%m%d-%H%M%S)"
+fi
+
+# --force so a moved tag (e.g. a corrected release re-tagged after a fix)
+# doesn't reject the whole fetch with "would clobber existing tag" and abort
+# the deploy over a stale local tag ref.
+git fetch origin --tags --force
+git checkout "$REF"
+if git symbolic-ref -q HEAD >/dev/null; then
+  git pull --ff-only origin "$REF"
+else
+  echo "  (detached HEAD at $REF - already at the exact ref, nothing to pull)"
+fi
+git submodule update --init --recursive
+
+# bin/deploy just possibly rewrote itself (self-modifying script - checked out
+# above along with everything else). This running process may have already
+# buffered/executed past this point using the OLD script content even though
+# the file on disk is now current (observed directly: a git pull that updated
+# bin/deploy still ran the old dotenv invocation afterward in the same
+# process). Re-exec fresh so everything from here on reads the actual current
+# file, not whatever this invocation started with.
+if [[ -z "${BIN_DEPLOY_REEXECED:-}" ]]; then
+  export BIN_DEPLOY_REEXECED=1
+  exec "$0" "$ENVIRONMENT" "$REF" "$TAG"
+fi
+
+# Load both env files into THIS shell's environment so docker-compose's own
+# ${VAR} interpolation (SOLR_ADMIN_PASSWORD, DB_NAME, FCREPO_S3_BUCKET, etc.)
+# resolves correctly - .env.staging/.env.production last, so it wins on any
+# overlapping key, matching env_file:'s own list semantics.
+#
+# Deliberately not using the `dotenv` CLI for this: the version installed by
+# provision/site.yml (python3-dotenv-cli 2.2.0) does NOT merge multiple -e
+# files - passing two silently drops the first file's keys entirely (verified
+# directly on staging). Plain `source` has no such ambiguity across versions.
+set -a
+# shellcheck disable=SC1091
+source .env.common
+# shellcheck disable=SC1091
+source "$ENV_FILE"
+set +a
+
+echo "==> Pulling images"
+docker-compose -f "$COMPOSE_FILE" pull
+
+echo "==> Starting containers (compose will wait on initialize_app/migrations per its depends_on graph)"
+docker-compose -f "$COMPOSE_FILE" up -d --remove-orphans
+
+echo "==> Waiting for /up healthcheck"
+for i in $(seq 1 30); do
+  if curl -fsS http://localhost:3000/up >/dev/null 2>&1; then
+    echo "==> Healthcheck passed"
+    docker-compose -f "$COMPOSE_FILE" ps
+    exit 0
+  fi
+  sleep 5
+done
+
+echo "Healthcheck did not pass within 150s - check logs:" >&2
+echo "  docker-compose -f $COMPOSE_FILE logs --tail 200 web initialize_app" >&2
+exit 1
