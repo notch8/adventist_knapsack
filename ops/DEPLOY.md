@@ -42,7 +42,7 @@ these only need to be consistent between the app and its own backing services,
 so freshly generated values are correct and safe).
 
 Resolved (reusing production's IAM key pairs, per-bucket per your call):
-- `REPOSITORY_S3_*` - `samvera-original-files-staging` already existed in the account (unused, hand-created previously); wired up.
+- `REPOSITORY_S3_*` - `samvera-original-files-staging` bucket created (private, AES256, full public-access-block, matching production's `samvera-original-files`). Originally and incorrectly noted here as already existing - it didn't; confirmed via `Aws::S3::Errors::NoSuchBucket` on a real ingest attempt, then verified directly against AWS before creating it.
 - `FCREPO_AWS_KEY` / `FCREPO_AWS_SECRET` / `FCREPO_S3_BUCKET` - created `samvera-fcrepo-staging`, mirroring `samvera-fcrepo`'s encryption/public-access-block settings.
 
 Deferred, intentionally left out of `.env.staging` entirely (not set to a
@@ -123,6 +123,82 @@ sudo mkdir -p \
   /store/keep/db_data/dumps \
   /store/keep/redis_data \
   /cache
+```
+
+### 3. Seed host-mounted paths that shadow content baked into the image
+
+Docker **bind mounts** (host directory -> container path) don't get the
+"copy the image's existing content into the volume on first use" treatment
+that **named volumes** get - that's named-volume-only behavior. Two paths in
+this compose file mount over locations the image ships pre-populated:
+`solr`'s `/var/solr` (ships a default `security.json`) and the app's
+`hyrax-webapp/public/assets` (precompiled, fingerprinted Sprockets assets
+baked in at image build time). On a genuinely fresh host directory, both are
+silently hidden, causing Solr's healthcheck to fail auth and the app to serve
+completely unstyled pages (asset 404s). Confirmed on staging's first real
+deploy - do this *before* first bringing the stack up on any fresh
+environment:
+
+There's a third, related gap that isn't a bind-mount issue but the same
+underlying cause (production accumulated one-off manual setup over time that
+was never captured anywhere): `fcrepo` connects to its own Postgres role/database
+(separate from the main Hyku one, `-Dfcrepo.postgresql.username=fcrepo`), but
+the official `postgres` image's first-boot init only creates the ONE
+user/database given via `POSTGRES_USER`/`POSTGRES_DB`. On a genuinely fresh
+`db` volume, the `fcrepo` role never exists, and fcrepo fails with
+`FATAL: password authentication failed for user "fcrepo"` - which surfaces to
+the app as `Ldp::HttpError (STATUS: 503)`, specifically when creating anything
+that needs a Fedora resource (a new tenant's default Admin Set, for example -
+confirmed via this exact failure on staging's first tenant-creation attempt).
+Fix once per fresh `db` volume:
+```bash
+FCREPO_PW=$(grep '^FCREPO_DB_PASSWORD=' .env.staging | cut -d= -f2- | tr -d "'")
+cat > /tmp/create_fcrepo_role.sql <<SQL
+CREATE ROLE fcrepo WITH LOGIN PASSWORD '$FCREPO_PW';
+CREATE DATABASE fcrepo OWNER fcrepo;
+SQL
+docker cp /tmp/create_fcrepo_role.sql adventist_knapsack-db-1:/tmp/create_fcrepo_role.sql
+docker exec adventist_knapsack-db-1 psql -U hyku-staging-hyrax -d hyku-staging-hyrax -f /tmp/create_fcrepo_role.sql
+docker exec adventist_knapsack-db-1 rm -f /tmp/create_fcrepo_role.sql
+rm -f /tmp/create_fcrepo_role.sql
+docker restart adventist_knapsack-fcrepo-1
+```
+(swap `.env.staging`/`hyku-staging-hyrax` for production's equivalents)
+
+```bash
+IMAGE=ghcr.io/notch8/adventist_knapsack/web:<tag you're deploying>
+
+# Solr's security.json (path differs if you're not on staging's single-volume layout)
+sudo docker create --name _seed ghcr.io/samvera/hyku/solr:latest
+sudo docker cp _seed:/var/solr/data/security.json /store/keep/solr-data/data/security.json
+sudo docker rm _seed
+sudo chown -R 8983:8983 /store/keep/solr-data
+
+# Precompiled assets - staging's path shown; production uses /store/tmp/public-assets
+sudo docker create --name _seed "$IMAGE"
+sudo docker cp _seed:/app/samvera/hyrax-webapp/public/assets/. /store/keep/tmp/public-assets/
+sudo docker rm _seed
+sudo chown -R 1001:101 /store/keep/tmp/public-assets   # app:app inside the image (Dockerfile's COPY --chown)
+```
+
+Note the ownership fixes use `sudo chown` directly on the host with the raw
+UID/GID (1001:101, from the Dockerfile's `COPY --chown=1001:101`) rather than
+`docker run ... chown` as the container's own `app` user - that user can't
+chown files it doesn't already own (`Operation not permitted`), since it's
+unprivileged inside the image.
+
+**If you're doing this after the stack is already running** (as opposed to
+before first boot, e.g. while debugging an already-deployed fresh
+environment): seeding the assets isn't enough on its own. Rails loads the
+Sprockets manifest once at boot and caches it in memory - it has no way to
+notice files that appeared on disk afterward. The symptom is confusing: the
+page loads fine (200), but `stylesheet_link_tag`/`javascript_include_tag`
+silently fall back to non-fingerprinted legacy paths (`/stylesheets/application.css`,
+`/javascripts/application.js`, both 404) instead of raising an error. Restart
+`web` (and `worker`, cheap and harmless) after seeding to force Rails to
+re-read the now-present manifest:
+```bash
+docker restart adventist_knapsack-web-1 adventist_knapsack-worker-1
 ```
 
 ## Deploying
