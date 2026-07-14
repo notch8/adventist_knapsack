@@ -156,7 +156,11 @@ direct access ever stops working for you.
 **2. On the server** (SSH in via VPN or the jump box - see the
 [playbook's access instructions](https://github.com/notch8/playbook/blob/main/maint-clients/adventist.md)),
 same command shape for both environments, run from the repo root
-(`/store/keep/adventist_knapsack`):
+(`/store/keep/adventist_knapsack`). **Run this as yourself (e.g. `max`), not
+as `root`** - running it as root means `git checkout`/`git pull` rewrite
+`.env.common` (a tracked file) with root's default permissions, silently
+un-doing the group-writable state `bin/push-env` needs for the next person's
+push. If that happens: `sudo chmod 664 .env.common` fixes it.
 ```bash
 # staging, latest main
 bin/deploy staging
@@ -202,7 +206,7 @@ Run through this on staging before ever pointing `bin/deploy production` at a
 new ref:
 
 - [ ] `bin/deploy staging` completes and prints a passing healthcheck
-- [ ] `dotenv -o -f .env.staging,.env.common docker-compose -f docker-compose.staging.yml logs initialize_app` shows migrations ran (or "all migrations have been run" with nothing pending)
+- [ ] `set -a && source .env.common && source .env.staging && set +a && docker-compose -f docker-compose.staging.yml logs initialize_app` shows migrations ran (or "all migrations have been run" with nothing pending)
 - [ ] `curl -fsS https://s2.adventistdigitallibrary.org/up` succeeds from outside the box, not just `localhost:3000`
 - [ ] `docker restart <web container>` and confirm it comes back on its own (`restart: unless-stopped` actually behaves)
 - [ ] Uploading a test file lands in the staging S3 bucket, not local disk and not production's bucket

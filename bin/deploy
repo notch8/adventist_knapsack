@@ -71,22 +71,38 @@ else
 fi
 git submodule update --init --recursive
 
+# Load both env files into THIS shell's environment so docker-compose's own
+# ${VAR} interpolation (SOLR_ADMIN_PASSWORD, DB_NAME, FCREPO_S3_BUCKET, etc.)
+# resolves correctly - .env.staging/.env.production last, so it wins on any
+# overlapping key, matching env_file:'s own list semantics.
+#
+# Deliberately not using the `dotenv` CLI for this: the version installed by
+# provision/site.yml (python3-dotenv-cli 2.2.0) does NOT merge multiple -e
+# files - passing two silently drops the first file's keys entirely (verified
+# directly on staging). Plain `source` has no such ambiguity across versions.
+set -a
+# shellcheck disable=SC1091
+source .env.common
+# shellcheck disable=SC1091
+source "$ENV_FILE"
+set +a
+
 echo "==> Pulling images"
-dotenv -o -f "$ENV_FILE,.env.common" docker-compose -f "$COMPOSE_FILE" pull
+docker-compose -f "$COMPOSE_FILE" pull
 
 echo "==> Starting containers (compose will wait on initialize_app/migrations per its depends_on graph)"
-dotenv -o -f "$ENV_FILE,.env.common" docker-compose -f "$COMPOSE_FILE" up -d --remove-orphans
+docker-compose -f "$COMPOSE_FILE" up -d --remove-orphans
 
 echo "==> Waiting for /up healthcheck"
 for i in $(seq 1 30); do
   if curl -fsS http://localhost:3000/up >/dev/null 2>&1; then
     echo "==> Healthcheck passed"
-    dotenv -o -f "$ENV_FILE,.env.common" docker-compose -f "$COMPOSE_FILE" ps
+    docker-compose -f "$COMPOSE_FILE" ps
     exit 0
   fi
   sleep 5
 done
 
 echo "Healthcheck did not pass within 150s - check logs:" >&2
-echo "  dotenv -o -f $ENV_FILE,.env.common docker-compose -f $COMPOSE_FILE logs --tail 200 web initialize_app" >&2
+echo "  docker-compose -f $COMPOSE_FILE logs --tail 200 web initialize_app" >&2
 exit 1
