@@ -62,7 +62,10 @@ if ! git -C hyrax-webapp diff --quiet || ! git -C hyrax-webapp diff --cached --q
   git -C hyrax-webapp stash push -u -m "bin/deploy auto-stash $(date +%Y%m%d-%H%M%S)"
 fi
 
-git fetch origin --tags
+# --force so a moved tag (e.g. a corrected release re-tagged after a fix)
+# doesn't reject the whole fetch with "would clobber existing tag" and abort
+# the deploy over a stale local tag ref.
+git fetch origin --tags --force
 git checkout "$REF"
 if git symbolic-ref -q HEAD >/dev/null; then
   git pull --ff-only origin "$REF"
