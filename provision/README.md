@@ -240,7 +240,11 @@ Application deploys (as opposed to this host provisioning) are handled by
 `bin/deploy` at the repo root - see [ops/DEPLOY.md](../ops/DEPLOY.md). For a
 one-off manual Docker Compose command against a specific environment:
 ```bash
-alias dc='dotenv -o -f .env.production,.env.common docker compose -f docker-compose.production.yml'
+# Not a plain alias - the installed python3-dotenv-cli (2.2.0) doesn't merge
+# multiple -e files (passing two silently drops the first file's keys), so
+# this loads both into the shell directly instead. A function, not an alias,
+# since it needs multiple statements.
+dc() { set -a; source .env.common; source .env.production; set +a; docker-compose -f docker-compose.production.yml "$@"; }
 # (swap .env.production / docker-compose.production.yml for .env.staging / docker-compose.staging.yml on staging)
 ```
 
