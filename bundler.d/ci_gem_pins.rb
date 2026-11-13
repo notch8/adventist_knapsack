@@ -8,3 +8,8 @@
 #     factory setup in tests
 override_gem 'blacklight_advanced_search', '~> 7.0'
 ensure_gem 'json', '~> 2.12.2'
+
+# OVERRIDE Bulkrax v9.3.0, backporting v9.5.2 (the version Hyku v7.2.2 ships):
+# picks up a dependency fix ahead of hyrax-webapp's own constraint. Remove
+# once the submodule vendors a Hyku release at or past v7.2.2.
+override_gem "bulkrax", "~> 9.5.2"
