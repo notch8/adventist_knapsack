@@ -8,3 +8,9 @@
 #     factory setup in tests
 override_gem 'blacklight_advanced_search', '~> 7.0'
 ensure_gem 'json', '~> 2.12.2'
+
+# OVERRIDE Blacklight v7.43.0: its new Solr-runtime logging reads
+# ActiveSupport::IsolatedExecutionState, which doesn't exist before Rails 7.0
+# (we're on 6.1), raising NameError on every request. Remove once we're on
+# Rails 7+, or once a Blacklight release restores Rails 6.1 support.
+override_gem 'blacklight', '~> 7.42.0'
