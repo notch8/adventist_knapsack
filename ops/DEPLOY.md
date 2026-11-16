@@ -251,6 +251,13 @@ bin/deploy production
 bin/deploy production v1.0.0 v1.0.0
 ```
 
+**After a production deploy, purge the Cloudflare cache** - Adventist's
+Cloudflare isn't under Terraform yet (unlike our other accounts, where
+purge-on-deploy is automated), so it keeps serving old fingerprinted asset
+paths otherwise. Dashboard -> Caching -> Configuration -> Purge Everything
+for the zone. Remove this step once this account is brought under Terraform
+like the rest.
+
 What it does (see `bin/deploy` for the exact commands): checks `.env.common`
 and `.env.<environment>` are present (fails with a pointer to `bin/push-env`
 if not), stashes (not discards) any local drift in either the repo or the
