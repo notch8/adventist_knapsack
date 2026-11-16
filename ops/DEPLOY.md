@@ -256,7 +256,7 @@ and `.env.<environment>` are present (fails with a pointer to `bin/push-env`
 if not), stashes (not discards) any local drift in either the repo or the
 submodule so it can't silently block or get clobbered by the pull, checks out
 the requested git ref, pulls images, runs `docker compose up -d`, and polls
-`/up` until it's healthy. Migrations are not a separate step - the existing
+`/healthz` until it's healthy. Migrations are not a separate step - the existing
 `initialize_app` service (`bin/db-migrate-seed.sh`) already runs
 `rails db:migrate` before `web`/`worker` are allowed to start. If a stash ever
 gets created, `git stash list` (and the same in `hyrax-webapp/`) shows it -
@@ -283,7 +283,7 @@ new ref:
 
 - [ ] `bin/deploy staging` completes and prints a passing healthcheck
 - [ ] `set -a && source .env.common && source .env.staging && set +a && docker-compose -f docker-compose.staging.yml logs initialize_app` shows migrations ran (or "all migrations have been run" with nothing pending)
-- [ ] `curl -fsS https://s2.adventistdigitallibrary.org/up` succeeds from outside the box, not just `localhost:3000`
+- [ ] `curl -fsS https://s2.adventistdigitallibrary.org/healthz` succeeds from outside the box, not just `localhost:3000`
 - [ ] `docker restart <web container>` and confirm it comes back on its own (`restart: unless-stopped` actually behaves)
 - [ ] Uploading a test file lands in the staging S3 bucket, not local disk and not production's bucket
 - [ ] `df -h /store/keep` still has headroom after the deploy

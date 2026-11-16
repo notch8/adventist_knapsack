@@ -108,9 +108,9 @@ docker-compose -f "$COMPOSE_FILE" pull
 echo "==> Starting containers (compose will wait on initialize_app/migrations per its depends_on graph)"
 docker-compose -f "$COMPOSE_FILE" up -d --remove-orphans
 
-echo "==> Waiting for /up healthcheck"
+echo "==> Waiting for /healthz healthcheck"
 for i in $(seq 1 30); do
-  if curl -fsS http://localhost:3000/up >/dev/null 2>&1; then
+  if curl -fsS http://localhost:3000/healthz >/dev/null 2>&1; then
     echo "==> Healthcheck passed"
     docker-compose -f "$COMPOSE_FILE" ps
     exit 0
