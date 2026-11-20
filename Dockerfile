@@ -1,4 +1,4 @@
-ARG HYRAX_IMAGE_VERSION=hyrax-v5.2.0
+ARG HYRAX_IMAGE_VERSION=hyrax-v5.2.1
 FROM ghcr.io/samvera/hyrax/hyrax-base:$HYRAX_IMAGE_VERSION AS hyku-web
 
 USER root
