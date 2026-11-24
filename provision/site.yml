@@ -23,6 +23,16 @@
     - name: Flush handlers to apply DNS changes immediately
       meta: flush_handlers
 
+    - name: Remove stale static DNS pins for Ubuntu archive mirrors from /etc/hosts
+      replace:
+        path: /etc/hosts
+        regexp: '^\S+\s+{{ item }}\s*\n'
+        replace: ''
+      loop:
+        - archive.ubuntu.com
+        - security.ubuntu.com
+      tags: [base, nginx-patch]
+
   roles:
     - role: base_setup
       tags: base
@@ -136,6 +146,31 @@
         hyku_default_host: "{{ environments[env].hyku_admin_host | replace(environments[env].hyku_admin_host.split('.')[0], '%{tenant}') }}"
         hyku_root_host: "{{ environments[env].hyku_admin_host }}"
 
+    - name: Back up nginx configuration before patching
+      copy:
+        src: /etc/nginx/
+        dest: "/root/nginx-backup-{{ ansible_facts['date_time']['date'] | replace('-', '') }}/"
+        remote_src: yes
+      tags: [nginx, nginx-patch]
+
+    - name: Update apt cache (retry to ride out transient upstream mirror failures)
+      apt:
+        update_cache: yes
+      register: nginx_patch_apt_update
+      retries: 5
+      delay: 30
+      until: nginx_patch_apt_update is succeeded
+      tags: [nginx, nginx-patch]
+
+    - name: Upgrade nginx to the patched version
+      apt:
+        name: nginx
+        state: latest
+        only_upgrade: yes
+        update_cache: no
+      notify: restart nginx
+      tags: [nginx, nginx-patch]
+
     - name: Deploy Nginx configuration
       template:
         src: files/nginx-default.j2
@@ -143,6 +178,11 @@
         mode: '0644'
       notify: restart nginx
       tags: [nginx, certbot]
+
+    - name: Validate nginx configuration syntax
+      command: nginx -t
+      changed_when: false
+      tags: [nginx, certbot, nginx-patch]
 
     - name: Ensure adventist_knapsack directory exists
       file:
@@ -276,12 +316,18 @@
         groups: docker
         append: yes
 
+    - name: Set default shell to bash for adlquantum6269
+      user:
+        name: adlquantum6269
+        shell: /bin/bash
+
     - name: Create user accounts
       user:
         name: "{{ item.name }}"
         state: present
         create_home: yes
         groups: adm,sudo,docker
+        shell: /bin/bash
       loop: "{{ ssh_users }}"
 
     - name: Configure sudo without password
