@@ -174,6 +174,8 @@ services:
 
   web:
     <<: *app
+    labels:
+      - autoheal=true
     depends_on:
       db:
         condition: service_started
@@ -261,3 +263,14 @@ services:
       - /store/keep/redis_data:/data
     networks:
       internal:
+
+  # Restarts containers labeled autoheal=true when Docker reports them
+  # unhealthy (see web's healthcheck). Needed because a wedged puma can
+  # fail its own health check indefinitely without ever crashing.
+  autoheal:
+    image: willfarrell/autoheal:latest
+    restart: unless-stopped
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
